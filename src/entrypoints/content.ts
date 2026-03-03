@@ -1,172 +1,179 @@
-import { isProductPage, extractAsin } from '../utils/amazon-url.js';
+import { isProductPage, extractAsin, AMAZON_MATCHES } from '../utils/amazon-url.js';
 import { parseProductPage } from '../parsers/amazon/product-page.js';
 import type { ProductPageData } from '../parsers/amazon/product-page.js';
 import { parseReviewList } from '../parsers/amazon/review-list.js';
 import type { ParsedReview } from '../parsers/amazon/review-list.js';
 import { fetchMoreReviews } from '../parsers/amazon/review-fetcher.js';
 import { calculateAdjustedRating } from '../stats/adjusted-rating.js';
-import type { AdjustedRatingResult } from '../stats/adjusted-rating.js';
 import { analyzeDistribution } from '../stats/distribution-analysis.js';
-import type { DistributionAnalysis } from '../stats/distribution-analysis.js';
 import { analyzeTimeline } from '../stats/timeline-analysis.js';
-import type { TimelineAnalysis } from '../stats/timeline-analysis.js';
 import '../components/overlay-panel.js';
-import '../components/quality-badge.js';
 import type { OverlayPanel } from '../components/overlay-panel.js';
-
-const LOG = '[HonestReviews]';
+// Import only from types.ts — not settings.ts, which pulls in wxt/browser polyfill
+// (incompatible with MAIN world; all storage access goes through the isolated-world relay).
+import type { UserSettings } from '../storage/types.js';
+import { DEFAULT_SETTINGS } from '../storage/types.js';
 
 export default defineContentScript({
-  matches: [
-    '*://*.amazon.com/*',
-    '*://*.amazon.co.uk/*',
-    '*://*.amazon.de/*',
-    '*://*.amazon.fr/*',
-    '*://*.amazon.it/*',
-    '*://*.amazon.es/*',
-    '*://*.amazon.ca/*',
-    '*://*.amazon.com.au/*',
-    '*://*.amazon.co.jp/*',
-    '*://*.amazon.in/*',
-  ],
+  matches: AMAZON_MATCHES,
   runAt: 'document_idle',
-  // Run in the page's main world so Lit's customElements.define() works.
-  // Firefox extension isolated worlds return null for customElements, breaking Lit.
   world: 'MAIN',
 
   async main() {
-    console.log(LOG, 'Content script loaded on', window.location.href);
+    if (!isProductPage(window.location.href)) return;
 
-    if (!isProductPage(window.location.href)) {
-      console.log(LOG, 'Not a product page — skipping');
-      return;
-    }
+    // All storage I/O is bridged through settings-relay.content.ts (isolated world)
+    // via window.postMessage, since chrome.storage is unreliable in MAIN world.
+    const settings = await requestSettings();
+    if (!settings.enabled) return;
 
     let panel: OverlayPanel | null = null;
-    let lastReviewCount = -1;
-    // Reviews fetched from /product-reviews/ pages (element: null, no DOM presence)
     let fetchedReviews: ParsedReview[] = [];
-    let fetchAbortController: AbortController | null = null;
+    let lastVisibleCount = -1;
+    const fetchAbort = new AbortController();
 
-    /** Merge visible DOM reviews with previously fetched data-only reviews. */
-    function mergedReviews(visible: ParsedReview[]): ParsedReview[] {
+    function merged(visible: ParsedReview[]): ParsedReview[] {
       const visibleIds = new Set(visible.map((r) => r.id));
-      const extras = fetchedReviews.filter((r) => !visibleIds.has(r.id));
-      return [...visible, ...extras];
+      return [...visible, ...fetchedReviews.filter((r) => !visibleIds.has(r.id))];
     }
 
-    const analyze = () => {
+    function analyze() {
       try {
         const productData = parseProductPage(document);
-        const visibleReviews = parseReviewList(document);
+        const visible = parseReviewList(document);
+        if (visible.length === lastVisibleCount && panel) return;
+        lastVisibleCount = visible.length;
 
-        console.log(LOG, `Parsed: rating=${productData.averageRating}, dist=${productData.starDistribution.length} stars, visible=${visibleReviews.length}, fetched=${fetchedReviews.length}`);
-
-        // Don't re-run if nothing changed
-        if (visibleReviews.length === lastReviewCount && panel) return;
-        lastReviewCount = visibleReviews.length;
-
-        const combined = mergedReviews(visibleReviews);
-        const adjustedRating = calculateAdjustedRating(combined, productData.averageRating);
+        const all = merged(visible);
+        const adjustedRating = calculateAdjustedRating(all, productData.averageRating);
         const distribution = analyzeDistribution(productData.starDistribution);
-        const timeline = analyzeTimeline(combined);
+        const timeline = analyzeTimeline(all);
 
         if (panel) {
           panel.productData = productData;
-          panel.reviews = combined;
+          panel.reviews = all;
           panel.adjustedRating = adjustedRating;
           panel.distribution = distribution;
           panel.timeline = timeline;
         } else {
-          panel = mountPanel(productData, combined, adjustedRating, distribution, timeline);
-          console.log(LOG, 'Panel mounted', panel);
-
-          // Start background fetch once the panel is up
-          const asin = extractAsin(window.location.href);
-          if (asin) {
-            fetchAbortController = new AbortController();
-            panel.fetchStatus = 'loading';
-
-            fetchMoreReviews(asin, fetchAbortController.signal, (batch) => {
-              if (!panel) return;
-              fetchedReviews = batch;
-              const vis = parseReviewList(document);
-              const all = mergedReviews(vis);
-              panel.reviews = all;
-              panel.adjustedRating = calculateAdjustedRating(all, productData.averageRating);
-              panel.timeline = analyzeTimeline(all);
-              panel.fetchedCount = batch.length;
-            }).then(() => {
-              if (panel) panel.fetchStatus = 'done';
-            }).catch(() => {});
-          }
+          panel = mountPanel(productData, all, adjustedRating, distribution, timeline, settings);
+          startFetch(panel, productData);
         }
       } catch (e) {
-        console.error(LOG, 'Error during analyze:', e);
+        console.error('[HonestReviews]', e);
       }
-    };
+    }
 
-    // Run immediately — histogram data is available at page load even without reviews
+    function startFetch(p: OverlayPanel, productData: ProductPageData) {
+      const asin = extractAsin(window.location.href);
+      if (!asin) return;
+
+      p.fetchStatus = 'loading';
+      fetchMoreReviews(asin, fetchAbort.signal, (batch) => {
+        if (!panel) return;
+        fetchedReviews = batch;
+        const all = merged(parseReviewList(document));
+        panel.reviews = all;
+        panel.adjustedRating = calculateAdjustedRating(all, productData.averageRating);
+        panel.timeline = analyzeTimeline(all);
+        panel.fetchedCount = batch.length;
+      })
+        .then(() => { if (panel) panel.fetchStatus = 'done'; })
+        .catch(() => {});
+    }
+
     analyze();
 
-    // Poll for reviews appearing (Amazon loads them async via XHR)
-    // Stops after 30 seconds or once reviews are stable
-    let pollCount = 0;
-    const MAX_POLLS = 60; // 30s at 500ms intervals
-
+    // Amazon loads reviews via XHR after page load — poll until they appear
+    let polls = 0;
     const poll = setInterval(() => {
-      pollCount++;
-      const reviewCount = document.querySelectorAll('[data-hook="review"], div.review, [id^="customer_review-"]').length;
-
-      if (reviewCount > 0 || pollCount >= MAX_POLLS) {
-        if (reviewCount > 0) {
-          analyze();
-        }
-        if (pollCount >= MAX_POLLS) {
-          console.log(LOG, 'Poll timeout — stopping');
-          clearInterval(poll);
-        }
-        // Once we have reviews, slow down to watching for changes
-        if (reviewCount > 0 && pollCount < MAX_POLLS) {
-          clearInterval(poll);
-          watchForChanges(analyze);
-        }
+      polls++;
+      const hasReviews = document.querySelector('[data-hook="review"], [id^="customer_review-"]') !== null;
+      if (hasReviews) {
+        analyze();
+        clearInterval(poll);
+        watchForChanges(analyze);
+      } else if (polls >= 60) {
+        clearInterval(poll);
       }
     }, 500);
 
+    // React to live settings changes relayed from settings-relay.content.ts.
+    window.addEventListener('message', (e) => {
+      if (e.source !== window || !e.data || e.data.type !== '__HR_SETTINGS__') return;
+
+      const changes = e.data.payload as Partial<UserSettings>;
+
+      if ('enabled' in changes) {
+        if (!changes.enabled) {
+          panel?.remove();
+          panel = null;
+          clearInterval(poll);
+          fetchAbort.abort();
+        } else if (!panel) {
+          analyze();
+        }
+        return;
+      }
+
+      if (!panel) return;
+      if ('showQualityBadges' in changes) panel.showQualityBadges = changes.showQualityBadges!;
+      if ('autoCollapse' in changes) panel.collapsed = changes.autoCollapse!;
+      if ('defaultSort' in changes) panel.defaultSort = changes.defaultSort!;
+    });
+
     window.addEventListener('beforeunload', () => {
       clearInterval(poll);
-      fetchAbortController?.abort();
+      fetchAbort.abort();
     });
   },
 });
 
-/** After initial reviews load, use MutationObserver to catch filter/page changes */
-function watchForChanges(analyze: () => void) {
-  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+/**
+ * Ask the isolated-world relay for the current settings via window.postMessage.
+ * Falls back to DEFAULT_SETTINGS after 2 s if the relay doesn't respond
+ * (e.g. on Firefox where MAIN world runs in a separate JS context).
+ */
+function requestSettings(): Promise<UserSettings> {
+  return new Promise((resolve) => {
+    const timer = setTimeout(() => {
+      window.removeEventListener('message', handler);
+      resolve({ ...DEFAULT_SETTINGS });
+    }, 2000);
 
-  const observer = new MutationObserver(() => {
-    if (debounceTimer) clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(analyze, 400);
+    function handler(e: MessageEvent) {
+      if (e.source !== window || !e.data || e.data.type !== '__HR_SETTINGS_INIT__') return;
+      clearTimeout(timer);
+      window.removeEventListener('message', handler);
+      resolve(e.data.payload as UserSettings);
+    }
+
+    window.addEventListener('message', handler);
+    window.postMessage({ type: '__HR_GET_SETTINGS__' }, '*');
   });
+}
 
-  const reviewContainer =
+function watchForChanges(analyze: () => void) {
+  let debounce: ReturnType<typeof setTimeout> | null = null;
+  const container =
     document.querySelector('#cm-cr-dp-review-list') ??
     document.querySelector('[data-hook="cr-dp-review-list"]') ??
     document.querySelector('#customer-reviews-content') ??
-    document.querySelector('#reviewsMedley') ??
     document.body;
 
-  observer.observe(reviewContainer, { childList: true, subtree: true });
+  new MutationObserver(() => {
+    if (debounce) clearTimeout(debounce);
+    debounce = setTimeout(analyze, 400);
+  }).observe(container, { childList: true, subtree: true });
 }
 
-/** Mount the overlay panel above the review section */
 function mountPanel(
   productData: ProductPageData,
   reviews: ParsedReview[],
-  adjustedRating: AdjustedRatingResult,
-  distribution: DistributionAnalysis,
-  timeline: TimelineAnalysis,
+  adjustedRating: ReturnType<typeof calculateAdjustedRating>,
+  distribution: ReturnType<typeof analyzeDistribution>,
+  timeline: ReturnType<typeof analyzeTimeline>,
+  settings: UserSettings,
 ): OverlayPanel {
   const panel = document.createElement('hr-overlay-panel') as OverlayPanel;
   panel.productData = productData;
@@ -174,9 +181,11 @@ function mountPanel(
   panel.adjustedRating = adjustedRating;
   panel.distribution = distribution;
   panel.timeline = timeline;
+  panel.collapsed = settings.autoCollapse;
+  panel.showQualityBadges = settings.showQualityBadges;
+  panel.defaultSort = settings.defaultSort;
 
-  // Try inserting above the review list section
-  const reviewSectionCandidates = [
+  const reviewSectionSelectors = [
     '#cm-cr-dp-review-list',
     '[data-hook="cr-dp-review-list"]',
     '#customer-reviews-content',
@@ -187,33 +196,17 @@ function mountPanel(
     '#arp-reviews-summary_feature_div',
   ];
 
-  for (const sel of reviewSectionCandidates) {
-    const target = document.querySelector(sel);
-    if (target) {
-      console.log(LOG, `Inserting panel before "${sel}"`);
-      target.insertAdjacentElement('beforebegin', panel);
-      return panel;
-    }
+  const containerSelectors = ['#ppd', '#dp-container', '#centerCol'];
+
+  for (const sel of reviewSectionSelectors) {
+    const el = document.querySelector(sel);
+    if (el) { el.insertAdjacentElement('beforebegin', panel); return panel; }
+  }
+  for (const sel of containerSelectors) {
+    const el = document.querySelector(sel);
+    if (el) { el.appendChild(panel); return panel; }
   }
 
-  // Fallback: insert after the product title / above the fold
-  const fallbackCandidates = [
-    '#ppd',
-    '#dp-container',
-    '#centerCol',
-    'div[data-cel-widget="dpx_customer_review_feature_div"]',
-  ];
-
-  for (const sel of fallbackCandidates) {
-    const target = document.querySelector(sel);
-    if (target) {
-      console.log(LOG, `Fallback: appending panel to "${sel}"`);
-      target.appendChild(panel);
-      return panel;
-    }
-  }
-
-  console.log(LOG, 'Last resort: appending to body');
   document.body.appendChild(panel);
   return panel;
 }

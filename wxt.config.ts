@@ -1,18 +1,14 @@
 import { defineConfig } from 'wxt';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  // WXT auto-selects the correct API per browser target.
-  // Build for Chrome: npm run build
-  // Build for Firefox: npm run build:firefox
-  // Dev with Firefox: npm run dev:firefox
   srcDir: 'src',
 
   vite: () => ({
+    plugins: [tailwindcss()],
     define: {
-      // Firefox extension isolated worlds return null for the bare `customElements` global.
-      // Lit's @customElement decorator calls customElements.define() at module init time.
-      // Replacing with window.customElements (accessible via XRay wrapper) fixes this for
-      // all Firefox versions. On Chrome and in MAIN world this is a no-op equivalence.
+      // Firefox isolated worlds return null for the bare `customElements` global.
+      // window.customElements is accessible via the XRay wrapper in all Firefox versions.
       customElements: 'window.customElements',
     },
   }),

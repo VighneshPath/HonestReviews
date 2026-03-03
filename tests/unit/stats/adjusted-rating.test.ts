@@ -14,6 +14,7 @@ function makeReview(overrides: Partial<ParsedReview>): ParsedReview {
     dateText: 'Reviewed on December 1, 2024',
     helpfulVotes: 0,
     hasImages: false,
+    images: [],
     reviewerName: 'Tester',
     bodyLength: 12,
     ...overrides,

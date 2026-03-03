@@ -14,6 +14,7 @@ function makeReview(overrides: Partial<ParsedReview> = {}): ParsedReview {
     dateText: '',
     helpfulVotes: 0,
     hasImages: false,
+    images: [],
     reviewerName: 'Test',
     bodyLength: 4,
     ...overrides,

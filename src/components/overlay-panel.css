@@ -1,0 +1,237 @@
+@reference "tailwindcss";
+
+:host {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --hr-accent: #3b82f6;
+  --hr-bg: #ffffff;
+  --hr-border: #e5e7eb;
+  --hr-text: #111827;
+  --hr-muted: #6b7280;
+}
+
+.panel {
+  @apply border rounded-xl overflow-hidden mb-4;
+  background: var(--hr-bg);
+  border-color: var(--hr-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.panel-header {
+  @apply flex items-center justify-between px-4 py-3 cursor-pointer select-none border-b;
+  background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
+  border-color: var(--hr-border);
+}
+
+.panel-title {
+  @apply flex items-center gap-2 font-bold text-sm;
+  color: var(--hr-text);
+}
+
+.logo {
+  @apply flex items-center justify-center w-5 h-5 rounded text-white text-[11px] font-extrabold;
+  background: var(--hr-accent);
+}
+
+.tagline {
+  @apply text-[11px] font-normal;
+  color: var(--hr-muted);
+}
+
+.collapse-btn {
+  @apply bg-transparent border-none text-base cursor-pointer p-0.5 leading-none transition-transform duration-200;
+  color: var(--hr-muted);
+}
+
+.collapse-btn.collapsed {
+  @apply -rotate-90;
+}
+
+.panel-body {
+  @apply p-4;
+}
+
+/* --- Overview tab --- */
+
+.verified-ratio {
+  @apply flex items-center gap-2 mb-4 px-3 py-2 bg-gray-50 rounded-lg text-sm;
+}
+
+.ratio-value {
+  @apply font-bold text-lg;
+  color: var(--hr-text);
+}
+
+.ratio-label {
+  color: var(--hr-muted);
+}
+
+.section {
+  @apply mb-5;
+}
+
+.section-title {
+  @apply text-[12px] font-bold uppercase tracking-wider mb-2.5;
+  color: var(--hr-muted);
+}
+
+.divider {
+  @apply h-px my-4;
+  background: var(--hr-border);
+}
+
+.timeline-alert {
+  @apply px-3 py-2.5 rounded-lg text-xs leading-relaxed;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  color: #92400e;
+}
+
+/* --- Tabs --- */
+
+.tab-bar {
+  @apply flex border-b mb-4;
+  border-color: var(--hr-border);
+}
+
+.tab-btn {
+  @apply flex-1 py-2 bg-transparent border-b-2 border-transparent text-[13px] font-semibold cursor-pointer transition-all duration-150;
+  font-family: inherit;
+  color: var(--hr-muted);
+}
+
+.tab-btn.active {
+  color: var(--hr-accent);
+  border-bottom-color: var(--hr-accent);
+}
+
+/* --- Sort & Filter tab --- */
+
+.filter-section {
+  @apply mb-3;
+}
+
+.review-count {
+  @apply text-[11px] mb-2;
+  color: var(--hr-muted);
+}
+
+.fetching-label {
+  color: var(--hr-accent);
+}
+
+.review-list {
+  @apply flex flex-col;
+}
+
+.no-reviews {
+  @apply text-center py-6 text-sm;
+  color: #9ca3af;
+}
+
+.load-more-btn {
+  @apply block w-full py-2 mt-2.5 bg-gray-50 rounded-lg text-[12px] text-center cursor-pointer transition-colors duration-150;
+  border: 1px solid var(--hr-border);
+  color: var(--hr-muted);
+  font-family: inherit;
+}
+
+.load-more-btn:hover {
+  @apply bg-gray-100;
+}
+
+/* --- Fetch status --- */
+
+.fetch-status {
+  @apply flex items-center gap-1.5 text-[11px] mb-3;
+  color: var(--hr-muted);
+}
+
+.spinner {
+  @apply w-2.5 h-2.5 rounded-full border-2 shrink-0;
+  border-color: #e5e7eb;
+  border-top-color: var(--hr-accent);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* --- Review cards --- */
+
+.review-card {
+  @apply py-2.5 border-b border-gray-100;
+}
+
+.review-card:last-child {
+  @apply border-b-0;
+}
+
+.review-card-header {
+  @apply flex items-center gap-1.5 mb-1 flex-wrap;
+}
+
+.stars {
+  @apply text-sm;
+  color: #f59e0b;
+  letter-spacing: -1px;
+}
+
+.quality-pill {
+  @apply inline-block px-1.5 rounded-full text-[10px] font-bold text-white text-center;
+  min-width: 22px;
+}
+
+.quality-pill--high    { background: #22c55e; }
+.quality-pill--mid     { background: #3b82f6; }
+.quality-pill--low     { background: #f59e0b; }
+.quality-pill--minimal { background: #9ca3af; }
+
+.verified-badge {
+  @apply text-[10px] font-semibold;
+  color: #059669;
+}
+
+.review-title {
+  @apply text-sm font-semibold mb-0.5;
+  color: var(--hr-text);
+}
+
+.review-body {
+  @apply text-xs leading-relaxed;
+  color: #4b5563;
+}
+
+.review-body--empty {
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.expand-btn {
+  @apply bg-transparent border-none text-[11px] p-0 cursor-pointer block mt-0.5;
+  color: var(--hr-accent);
+  font-family: inherit;
+}
+
+.expand-btn:hover {
+  @apply underline;
+}
+
+.review-meta {
+  @apply text-[11px] mt-1;
+  color: #9ca3af;
+}
+
+.review-images {
+  @apply flex gap-1.5 mt-1.5 flex-wrap;
+}
+
+.review-thumb {
+  @apply w-[72px] h-[72px] object-cover rounded-md border cursor-pointer transition-opacity duration-150;
+  border-color: var(--hr-border);
+}
+
+.review-thumb:hover {
+  @apply opacity-85;
+}

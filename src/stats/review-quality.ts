@@ -91,10 +91,10 @@ export function qualityLabel(score: number): string {
   return 'Low Signal';
 }
 
-/** Quality tier color for UI */
-export function qualityColor(score: number): string {
-  if (score >= 75) return '#22c55e'; // green
-  if (score >= 50) return '#3b82f6'; // blue
-  if (score >= 25) return '#f59e0b'; // amber
-  return '#9ca3af'; // gray
+/** Returns a CSS modifier class for the quality tier */
+export function qualityTier(score: number): 'high' | 'mid' | 'low' | 'minimal' {
+  if (score >= 75) return 'high';
+  if (score >= 50) return 'mid';
+  if (score >= 25) return 'low';
+  return 'minimal';
 }

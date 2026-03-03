@@ -7,7 +7,71 @@
   <link rel="stylesheet" href="./style.css" />
 </head>
 <body>
-  <div id="app"></div>
+  <header class="popup-header">
+    <div class="popup-logo">HR</div>
+    <div>
+      <div class="popup-title">Honest Reviews</div>
+      <div class="popup-tagline">No AI · No servers · Just transparency</div>
+    </div>
+  </header>
+
+  <main class="popup-body">
+    <div id="status-card" class="status-card"></div>
+
+    <div class="settings-group">
+      <div class="settings-label">Settings</div>
+
+      <div class="toggle-row">
+        <span class="toggle-row-label">Extension enabled</span>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-enabled" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-row-label">Show quality badges</span>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-badges" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div class="toggle-row">
+        <span class="toggle-row-label">Auto-collapse panel</span>
+        <label class="toggle">
+          <input type="checkbox" id="toggle-collapse" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+
+      <div>
+        <label for="default-sort" class="sort-label">Default sort order</label>
+        <select class="sort-select" id="default-sort">
+          <option value="most-informative">Most Informative</option>
+          <option value="most-helpful">Most Helpful</option>
+          <option value="recent">Most Recent</option>
+          <option value="top-rated">Top Rated</option>
+          <option value="critical">Critical First</option>
+        </select>
+      </div>
+    </div>
+  </main>
+
+  <section class="support-section">
+    <div class="support-label">Support development</div>
+    <div class="support-links">
+      <a href="https://buymeacoffee.com/NerfLongshot" target="_blank" class="support-link support-link-coffee">☕ Buy Me a Coffee</a>
+      <a href="https://github.com/sponsors" target="_blank" class="support-link support-link-github">♥ Sponsor</a>
+      <a href="https://ko-fi.com/vighneshpath" target="_blank" class="support-link support-link-kofi">Ko-fi</a>
+    </div>
+  </section>
+
+  <footer class="popup-footer">
+    <a href="https://github.com/VighneshPath/HonestReviews" target="_blank">Open Source on GitHub</a>
+    · No affiliate links · No data collection
+  </footer>
+
   <script type="module" src="./main.ts"></script>
 </body>
 </html>

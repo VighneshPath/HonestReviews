@@ -1,0 +1,64 @@
+@reference "tailwindcss";
+
+:host {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.no-data {
+  @apply text-[13px];
+  color: #9ca3af;
+}
+
+.histogram-container {
+  @apply flex flex-col gap-1;
+}
+
+.histogram-row {
+  @apply items-center gap-2 text-[12px];
+  display: grid;
+  grid-template-columns: 48px 1fr 36px;
+}
+
+.star-label {
+  @apply text-right whitespace-nowrap;
+  color: #555;
+}
+
+.bar-track {
+  @apply bg-gray-200 rounded h-3.5 overflow-hidden;
+}
+
+.bar-fill {
+  @apply h-full rounded transition-[width] duration-400;
+}
+
+.bar-fill-5 { @apply bg-green-500; }
+.bar-fill-4 { @apply bg-green-300; }
+.bar-fill-3 { @apply bg-amber-400; }
+.bar-fill-2 { @apply bg-orange-400; }
+.bar-fill-1 { @apply bg-red-500; }
+
+.pct-label {
+  @apply text-[12px] tabular-nums;
+  color: #374151;
+}
+
+.pattern-badge {
+  @apply inline-flex items-center gap-1 mt-2.5 px-2.5 py-1 rounded-full text-[11px] font-semibold;
+}
+
+.pattern-green  { @apply bg-green-100 text-green-700; }
+.pattern-amber  { @apply bg-amber-100 text-amber-700; }
+.pattern-orange { @apply bg-orange-100 text-orange-600; }
+.pattern-red    { @apply bg-red-100 text-red-600; }
+.pattern-gray   { @apply bg-gray-100 text-gray-500; }
+
+.pattern-explanation {
+  @apply mt-2 text-[12px] text-gray-500 leading-relaxed;
+}
+
+.concern-dot {
+  @apply w-1.5 h-1.5 rounded-full shrink-0;
+  background: currentColor;
+}

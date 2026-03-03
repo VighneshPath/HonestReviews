@@ -1,0 +1,52 @@
+@reference "tailwindcss";
+
+:host {
+  display: block;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.container {
+  @apply flex items-start gap-3;
+}
+
+.rating-block {
+  @apply text-center min-w-16;
+}
+
+.rating-value {
+  @apply font-bold leading-none;
+  font-size: 28px;
+  color: #111827;
+}
+
+.rating-label {
+  @apply text-[10px] uppercase tracking-wider mt-0.5;
+  color: #6b7280;
+}
+
+.delta-badge {
+  @apply inline-block px-2 py-0.5 rounded-xl text-[12px] font-bold mt-1;
+}
+
+.delta-negative { @apply bg-amber-100 text-amber-800; }
+.delta-positive { @apply bg-green-100 text-green-800; }
+.delta-neutral  { @apply bg-gray-100 text-gray-500; }
+
+.info-block {
+  @apply flex-1;
+}
+
+.info-main {
+  @apply text-[13px] leading-relaxed;
+  color: #374151;
+}
+
+.info-sub {
+  @apply text-[11px] mt-1;
+  color: #9ca3af;
+}
+
+.insufficient {
+  @apply text-[13px] italic;
+  color: #9ca3af;
+}

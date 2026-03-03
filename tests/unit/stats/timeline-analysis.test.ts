@@ -14,6 +14,7 @@ function makeReview(date: Date | null, id = 'r'): ParsedReview {
     dateText: '',
     helpfulVotes: 0,
     hasImages: false,
+    images: [],
     reviewerName: '',
     bodyLength: 0,
   };

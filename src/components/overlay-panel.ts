@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { ProductPageData } from '../parsers/amazon/product-page.js';
 import type { ParsedReview } from '../parsers/amazon/review-list.js';
@@ -6,23 +6,29 @@ import type { AdjustedRatingResult } from '../stats/adjusted-rating.js';
 import type { DistributionAnalysis } from '../stats/distribution-analysis.js';
 import type { TimelineAnalysis } from '../stats/timeline-analysis.js';
 import type { FilterState } from './filter-bar.js';
+import type { SortMode } from '../stats/review-sorter.js';
 import { sortReviews } from '../stats/review-sorter.js';
-import { scoreReview, qualityColor } from '../stats/review-quality.js';
+import { scoreReview, qualityTier } from '../stats/review-quality.js';
 import './star-histogram.js';
 import './adjusted-rating.js';
 import './filter-bar.js';
+import styles from './overlay-panel.css?inline';
 
 @customElement('hr-overlay-panel')
 export class OverlayPanel extends LitElement {
+  static styles = unsafeCSS(styles);
+
   @property({ type: Object }) productData: ProductPageData | null = null;
-  @property({ type: Array }) reviews: ParsedReview[] = [];
+  @property({ type: Array })  reviews: ParsedReview[] = [];
   @property({ type: Object }) adjustedRating: AdjustedRatingResult | null = null;
   @property({ type: Object }) distribution: DistributionAnalysis | null = null;
   @property({ type: Object }) timeline: TimelineAnalysis | null = null;
   @property({ type: String }) fetchStatus: 'idle' | 'loading' | 'done' = 'idle';
   @property({ type: Number }) fetchedCount = 0;
+  @property({ type: Boolean }) collapsed = false;
+  @property({ type: Boolean }) showQualityBadges = true;
+  @property({ type: String }) defaultSort: SortMode = 'most-informative';
 
-  @state() private collapsed = false;
   @state() private activeTab: 'overview' | 'sort' = 'overview';
   @state() private filterState: FilterState = {
     verifiedOnly: false,
@@ -33,335 +39,28 @@ export class OverlayPanel extends LitElement {
   @state() private expandedIds: Set<string> = new Set();
   @state() private displayCount = 15;
 
-  static styles = css`
-    :host {
-      display: block;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      --hr-accent: #3b82f6;
-      --hr-bg: #ffffff;
-      --hr-border: #e5e7eb;
-      --hr-text: #111827;
-      --hr-text-muted: #6b7280;
-    }
+  protected firstUpdated() {
+    this.filterState = { ...this.filterState, sortMode: this.defaultSort };
+  }
 
-    .panel {
-      background: var(--hr-bg);
-      border: 1px solid var(--hr-border);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-      margin-bottom: 16px;
+  // When defaultSort changes (e.g. user updates setting in popup), apply it immediately.
+  protected updated(changed: Map<string, unknown>) {
+    if (changed.has('defaultSort') && changed.get('defaultSort') !== undefined) {
+      this.filterState = { ...this.filterState, sortMode: this.defaultSort };
     }
-
-    .panel-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 12px 16px;
-      background: linear-gradient(135deg, #eff6ff 0%, #f0fdf4 100%);
-      border-bottom: 1px solid var(--hr-border);
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .panel-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-weight: 700;
-      font-size: 14px;
-      color: var(--hr-text);
-    }
-
-    .logo-icon {
-      width: 20px;
-      height: 20px;
-      background: var(--hr-accent);
-      border-radius: 4px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 11px;
-      font-weight: 800;
-    }
-
-    .tagline {
-      font-size: 11px;
-      color: var(--hr-text-muted);
-      font-weight: 400;
-    }
-
-    .collapse-btn {
-      background: none;
-      border: none;
-      font-size: 16px;
-      cursor: pointer;
-      color: var(--hr-text-muted);
-      padding: 2px;
-      line-height: 1;
-      transition: transform 0.2s;
-    }
-
-    .collapse-btn.collapsed {
-      transform: rotate(-90deg);
-    }
-
-    .panel-body {
-      padding: 16px;
-    }
-
-    .verified-ratio {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      padding: 8px 12px;
-      background: #f9fafb;
-      border-radius: 8px;
-      font-size: 13px;
-    }
-
-    .ratio-value {
-      font-weight: 700;
-      font-size: 18px;
-      color: var(--hr-text);
-    }
-
-    .ratio-label {
-      color: var(--hr-text-muted);
-    }
-
-    .section {
-      margin-bottom: 20px;
-    }
-
-    .section-title {
-      font-size: 12px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      color: var(--hr-text-muted);
-      margin-bottom: 10px;
-    }
-
-    .divider {
-      height: 1px;
-      background: var(--hr-border);
-      margin: 16px 0;
-    }
-
-    .timeline-alert {
-      padding: 10px 12px;
-      background: #fef3c7;
-      border: 1px solid #fde68a;
-      border-radius: 8px;
-      font-size: 12px;
-      color: #92400e;
-      line-height: 1.5;
-    }
-
-    .tab-bar {
-      display: flex;
-      gap: 0;
-      border-bottom: 1px solid var(--hr-border);
-      margin-bottom: 16px;
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 8px;
-      background: none;
-      border: none;
-      border-bottom: 2px solid transparent;
-      font-family: inherit;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--hr-text-muted);
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-
-    .tab-btn.active {
-      color: var(--hr-accent);
-      border-bottom-color: var(--hr-accent);
-    }
-
-    .filter-section {
-      margin-bottom: 12px;
-    }
-
-    .review-count-info {
-      font-size: 11px;
-      color: var(--hr-text-muted);
-      margin-bottom: 8px;
-    }
-
-    .review-list {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .review-card {
-      padding: 10px 0;
-      border-bottom: 1px solid #f3f4f6;
-    }
-
-    .review-card:last-child {
-      border-bottom: none;
-    }
-
-    .review-card-header {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-bottom: 4px;
-      flex-wrap: wrap;
-    }
-
-    .review-stars {
-      color: #f59e0b;
-      font-size: 13px;
-      letter-spacing: -1px;
-    }
-
-    .quality-pill {
-      display: inline-block;
-      padding: 1px 6px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 700;
-      color: white;
-      min-width: 22px;
-      text-align: center;
-    }
-
-    .verified-badge {
-      font-size: 10px;
-      color: #059669;
-      font-weight: 600;
-    }
-
-    .review-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 3px;
-    }
-
-    .review-body {
-      font-size: 12px;
-      color: #4b5563;
-      line-height: 1.6;
-    }
-
-    .expand-btn {
-      background: none;
-      border: none;
-      color: var(--hr-accent);
-      font-size: 11px;
-      padding: 2px 0;
-      cursor: pointer;
-      font-family: inherit;
-      display: block;
-      margin-top: 2px;
-    }
-
-    .expand-btn:hover {
-      text-decoration: underline;
-    }
-
-    .review-meta {
-      font-size: 11px;
-      color: #9ca3af;
-      margin-top: 4px;
-    }
-
-    .review-images {
-      display: flex;
-      gap: 6px;
-      margin-top: 6px;
-      flex-wrap: wrap;
-    }
-
-    .review-thumb {
-      width: 72px;
-      height: 72px;
-      object-fit: cover;
-      border-radius: 6px;
-      border: 1px solid var(--hr-border);
-      cursor: pointer;
-      transition: opacity 0.15s;
-    }
-
-    .review-thumb:hover {
-      opacity: 0.85;
-    }
-
-    .no-reviews {
-      text-align: center;
-      padding: 24px;
-      color: #9ca3af;
-      font-size: 13px;
-    }
-
-    .load-more-btn {
-      display: block;
-      width: 100%;
-      padding: 8px;
-      margin-top: 10px;
-      background: #f9fafb;
-      border: 1px solid #e5e7eb;
-      border-radius: 8px;
-      font-family: inherit;
-      font-size: 12px;
-      color: var(--hr-text-muted);
-      cursor: pointer;
-      text-align: center;
-      transition: background 0.15s;
-    }
-
-    .load-more-btn:hover {
-      background: #f3f4f6;
-    }
-
-    .fetch-status {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      color: var(--hr-text-muted);
-      margin-bottom: 12px;
-    }
-
-    .fetch-spinner {
-      width: 10px;
-      height: 10px;
-      border: 2px solid #e5e7eb;
-      border-top-color: var(--hr-accent);
-      border-radius: 50%;
-      animation: spin 0.8s linear infinite;
-      flex-shrink: 0;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-  `;
+  }
 
   render() {
-    const visibleReviews = this.reviews.filter((r) => r.element !== null);
     const verifiedCount = this.reviews.filter((r) => r.isVerified).length;
-    const verifiedPct =
-      this.reviews.length > 0
-        ? Math.round((verifiedCount / this.reviews.length) * 100)
-        : null;
+    const verifiedPct = this.reviews.length > 0
+      ? Math.round((verifiedCount / this.reviews.length) * 100)
+      : null;
 
     return html`
       <div class="panel">
         <div class="panel-header" @click="${this.toggleCollapse}">
           <div class="panel-title">
-            <div class="logo-icon">HR</div>
+            <div class="logo">HR</div>
             <span>Honest Reviews</span>
             <span class="tagline">· No AI, no servers, just transparency</span>
           </div>
@@ -372,26 +71,24 @@ export class OverlayPanel extends LitElement {
           >▾</button>
         </div>
 
-        ${!this.collapsed
-          ? html`
-            <div class="panel-body">
-              <div class="tab-bar">
-                <button
-                  class="tab-btn ${this.activeTab === 'overview' ? 'active' : ''}"
-                  @click="${() => (this.activeTab = 'overview')}"
-                >Overview</button>
-                <button
-                  class="tab-btn ${this.activeTab === 'sort' ? 'active' : ''}"
-                  @click="${() => (this.activeTab = 'sort')}"
-                >Sort & Filter</button>
-              </div>
-
-              ${this.activeTab === 'overview'
-                ? this.renderOverview(verifiedPct, verifiedCount, visibleReviews.length)
-                : this.renderSortTab()}
+        ${!this.collapsed ? html`
+          <div class="panel-body">
+            <div class="tab-bar">
+              <button
+                class="tab-btn ${this.activeTab === 'overview' ? 'active' : ''}"
+                @click="${() => (this.activeTab = 'overview')}"
+              >Overview</button>
+              <button
+                class="tab-btn ${this.activeTab === 'sort' ? 'active' : ''}"
+                @click="${() => (this.activeTab = 'sort')}"
+              >Sort & Filter</button>
             </div>
-          `
-          : ''}
+
+            ${this.activeTab === 'overview'
+              ? this.renderOverview(verifiedPct, verifiedCount)
+              : this.renderSortTab()}
+          </div>
+        ` : ''}
       </div>
     `;
   }
@@ -400,7 +97,7 @@ export class OverlayPanel extends LitElement {
     if (this.fetchStatus === 'loading') {
       return html`
         <div class="fetch-status">
-          <div class="fetch-spinner"></div>
+          <div class="spinner"></div>
           Fetching more reviews for better stats…
         </div>
       `;
@@ -416,19 +113,18 @@ export class OverlayPanel extends LitElement {
     return '';
   }
 
-  private renderOverview(verifiedPct: number | null, verifiedCount: number, _visibleCount: number) {
+  private renderOverview(verifiedPct: number | null, verifiedCount: number) {
     return html`
       ${this.renderFetchStatus()}
 
-      ${verifiedPct !== null
-        ? html`
-          <div class="verified-ratio">
-            <span class="ratio-value">${verifiedPct}%</span>
-            <span class="ratio-label">verified purchases
-              (${verifiedCount} of ${this.reviews.length} analyzed)</span>
-          </div>
-        `
-        : ''}
+      ${verifiedPct !== null ? html`
+        <div class="verified-ratio">
+          <span class="ratio-value">${verifiedPct}%</span>
+          <span class="ratio-label">
+            verified purchases (${verifiedCount} of ${this.reviews.length} analyzed)
+          </span>
+        </div>
+      ` : ''}
 
       <div class="section">
         <div class="section-title">Rating Distribution</div>
@@ -448,14 +144,10 @@ export class OverlayPanel extends LitElement {
         ></hr-adjusted-rating>
       </div>
 
-      ${this.timeline?.hasBurst
-        ? html`
-          <div class="divider"></div>
-          <div class="timeline-alert">
-            ⚠️ ${this.timeline.burstDescription}
-          </div>
-        `
-        : ''}
+      ${this.timeline?.hasBurst ? html`
+        <div class="divider"></div>
+        <div class="timeline-alert">⚠️ ${this.timeline.burstDescription}</div>
+      ` : ''}
     `;
   }
 
@@ -463,7 +155,7 @@ export class OverlayPanel extends LitElement {
     const f = this.filterState;
     let filtered = [...this.reviews];
     if (f.verifiedOnly) filtered = filtered.filter((r) => r.isVerified);
-    if (f.hasPhotos) filtered = filtered.filter((r) => r.hasImages);
+    if (f.hasPhotos)    filtered = filtered.filter((r) => r.hasImages);
     if (f.minLength > 0) filtered = filtered.filter((r) => r.bodyLength >= f.minLength);
 
     const sorted = sortReviews(filtered, f.sortMode);
@@ -472,13 +164,18 @@ export class OverlayPanel extends LitElement {
 
     return html`
       <div class="filter-section">
-        <hr-filter-bar @filter-change="${this.onFilterChange}"></hr-filter-bar>
+        <hr-filter-bar
+          .defaultSort="${this.defaultSort}"
+          @filter-change="${this.onFilterChange}"
+        ></hr-filter-bar>
       </div>
 
-      <div class="review-count-info">
+      <div class="review-count">
         ${filtered.length} review${filtered.length !== 1 ? 's' : ''}
         ${filtered.length < this.reviews.length ? ' matching filters' : ''}
-        ${this.fetchStatus === 'loading' ? html` · <span style="color:var(--hr-accent)">fetching more…</span>` : ''}
+        ${this.fetchStatus === 'loading'
+          ? html` · <span class="fetching-label">fetching more…</span>`
+          : ''}
       </div>
 
       <div class="review-list">
@@ -497,7 +194,7 @@ export class OverlayPanel extends LitElement {
 
   private renderReviewCard(review: ParsedReview) {
     const score = scoreReview(review).total;
-    const color = qualityColor(score);
+    const tier = qualityTier(score);
     const isExpanded = this.expandedIds.has(review.id);
     const TRUNCATE_AT = 280;
     const needsTruncation = review.body.length > TRUNCATE_AT;
@@ -515,23 +212,25 @@ export class OverlayPanel extends LitElement {
     return html`
       <div class="review-card">
         <div class="review-card-header">
-          ${stars ? html`<span class="review-stars">${stars}</span>` : ''}
-          <span class="quality-pill" style="background:${color}" title="Quality score: ${score}/100">${score}</span>
+          ${stars ? html`<span class="stars">${stars}</span>` : ''}
+          ${this.showQualityBadges ? html`
+            <span class="quality-pill quality-pill--${tier}" title="Quality score: ${score}/100">
+              ${score}
+            </span>
+          ` : ''}
           ${review.isVerified ? html`<span class="verified-badge">✓ Verified</span>` : ''}
         </div>
 
         ${review.title ? html`<div class="review-title">${review.title}</div>` : ''}
 
-        ${review.body
-          ? html`
-            <div class="review-body">${bodyText}</div>
-            ${needsTruncation ? html`
-              <button class="expand-btn" @click="${() => this.toggleExpanded(review.id)}">
-                ${isExpanded ? 'Show less ▲' : 'Show more ▼'}
-              </button>
-            ` : ''}
-          `
-          : html`<div class="review-body" style="color:#9ca3af;font-style:italic">(no text)</div>`}
+        ${review.body ? html`
+          <div class="review-body">${bodyText}</div>
+          ${needsTruncation ? html`
+            <button class="expand-btn" @click="${() => this.toggleExpanded(review.id)}">
+              ${isExpanded ? 'Show less ▲' : 'Show more ▼'}
+            </button>
+          ` : ''}
+        ` : html`<div class="review-body review-body--empty">(no text)</div>`}
 
         ${review.images.length > 0 ? html`
           <div class="review-images">
@@ -556,7 +255,7 @@ export class OverlayPanel extends LitElement {
 
   private onFilterChange(e: CustomEvent<FilterState>) {
     this.filterState = e.detail;
-    this.displayCount = 15; // reset pagination on filter change
+    this.displayCount = 15;
   }
 
   private toggleExpanded(id: string) {

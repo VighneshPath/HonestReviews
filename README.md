@@ -28,7 +28,11 @@ Fakespot shut down in July 2025. ReviewMeta is gone. The two biggest review anal
 4. Click **Load unpacked** → select the unzipped `chrome-mv3` folder
 
 ### Firefox
-Coming soon.
+1. Download the latest `honest-reviews-firefox-vX.Y.Z.zip` from [Releases](../../releases)
+2. Go to `about:debugging` → **This Firefox** → **Load Temporary Add-on**
+3. Select the `.zip` file (or any file inside the unzipped folder)
+
+> Permanent installation requires a signed add-on. Temporary add-ons are removed when Firefox restarts.
 
 ### Development
 ```bash
@@ -130,7 +134,7 @@ Every review gets a score estimating how useful it is to read. Higher = more wor
 
 ```
 src/
-├── entrypoints/        # WXT entry points (content script, popup)
+├── entrypoints/        # WXT entry points (content script, popup, background)
 ├── parsers/amazon/     # DOM parsing — all selectors in selectors.ts
 ├── stats/              # Pure statistical functions (no DOM)
 │   ├── adjusted-rating.ts
@@ -138,10 +142,11 @@ src/
 │   ├── review-quality.ts   ← quality score formula
 │   ├── review-sorter.ts
 │   └── timeline-analysis.ts
-├── components/         # Lit web components (Shadow DOM)
+├── components/         # Lit web components (Shadow DOM), each with a .css file
+├── storage/            # Settings types and chrome.storage helpers
 └── utils/              # URL matching
 tests/
-├── unit/               # Vitest unit tests (91 tests, ~1s)
+├── unit/               # Vitest unit tests (87 tests, ~1s)
 └── fixtures/           # Saved HTML snapshots
 ```
 

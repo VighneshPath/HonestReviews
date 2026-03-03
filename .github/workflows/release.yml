@@ -28,18 +28,32 @@ jobs:
       - name: Build Chrome extension
         run: npm run build
 
+      - name: Build Firefox extension
+        run: npm run build:firefox
+
       - name: Package Chrome zip
         run: zip -r "honest-reviews-chrome-${{ github.ref_name }}.zip" .output/chrome-mv3/
+
+      - name: Package Firefox zip
+        run: zip -r "honest-reviews-firefox-${{ github.ref_name }}.zip" .output/firefox-mv3/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          files: honest-reviews-chrome-${{ github.ref_name }}.zip
+          files: |
+            honest-reviews-chrome-${{ github.ref_name }}.zip
+            honest-reviews-firefox-${{ github.ref_name }}.zip
           generate_release_notes: true
           body: |
             ## Installation
 
+            ### Chrome / Chromium
             1. Download `honest-reviews-chrome-${{ github.ref_name }}.zip`
             2. Unzip it
             3. Open `chrome://extensions` → enable **Developer mode**
             4. Click **Load unpacked** → select the unzipped `chrome-mv3` folder
+
+            ### Firefox
+            1. Download `honest-reviews-firefox-${{ github.ref_name }}.zip`
+            2. Open `about:debugging` → **This Firefox** → **Load Temporary Add-on**
+            3. Select the zip file directly

@@ -22,11 +22,13 @@
     "lit": "^3.2.0"
   },
   "devDependencies": {
-    "wxt": "^0.19.0",
-    "typescript": "^5.5.0",
-    "vitest": "^2.0.0",
+    "@tailwindcss/vite": "^4.2.1",
+    "@types/chrome": "^0.0.268",
     "@vitest/coverage-v8": "^2.0.0",
     "jsdom": "^24.0.0",
-    "@types/chrome": "^0.0.268"
+    "tailwindcss": "^4.2.1",
+    "typescript": "^5.5.0",
+    "vitest": "^2.0.0",
+    "wxt": "^0.19.0"
   }
 }

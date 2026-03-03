@@ -145,6 +145,13 @@ body {
   transform: translateX(16px);
 }
 
+.sort-label {
+  display: block;
+  font-size: 13px;
+  color: #374151;
+  margin-bottom: 6px;
+}
+
 .sort-select {
   width: 100%;
   padding: 6px 10px;
