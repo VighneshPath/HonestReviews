@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><title>Test Product — Amazon.in</title></head>
+<body>
+<div id="dp-container">
+  <!-- Overall rating (modern selectors) -->
+  <div id="averageCustomerReviews">
+    <span data-hook="average-star-rating"><span class="a-icon-alt">4.2 out of 5 stars</span></span>
+    <span data-hook="rating-out-of-text">4.2 out of 5</span>
+    <span data-hook="total-review-count">1,247 global ratings</span>
+  </div>
+
+  <!-- Star histogram — modern Amazon: ul/li with aria-label on anchors -->
+  <ul id="histogramTable">
+    <li class="a-align-center a-spacing-none">
+      <span class="a-list-item">
+        <a aria-label="58 percent of reviews have 5 stars" href="#">5 star bar</a>
+      </span>
+    </li>
+    <li class="a-align-center a-spacing-none">
+      <span class="a-list-item">
+        <a aria-label="15 percent of reviews have 4 stars" href="#">4 star bar</a>
+      </span>
+    </li>
+    <li class="a-align-center a-spacing-none">
+      <span class="a-list-item">
+        <a aria-label="7 percent of reviews have 3 stars" href="#">3 star bar</a>
+      </span>
+    </li>
+    <li class="a-align-center a-spacing-none">
+      <span class="a-list-item">
+        <a aria-label="5 percent of reviews have 2 stars" href="#">2 star bar</a>
+      </span>
+    </li>
+    <li class="a-align-center a-spacing-none">
+      <span class="a-list-item">
+        <a aria-label="15 percent of reviews have 1 stars" href="#">1 star bar</a>
+      </span>
+    </li>
+  </ul>
+
+  <!-- Review list -->
+  <div id="cm-cr-dp-review-list">
+
+    <!-- Review 1: verified, 5-star, long, recent -->
+    <div data-hook="review" id="customer_review-R1VERIFIED5STAR">
+      <a data-hook="review-title">
+        <i data-hook="review-star-rating" class="a-icon a-icon-star a-star-5">
+          <span class="a-icon-alt">5.0 out of 5 stars</span>
+        </i>
+        <span class="a-letter-space"></span>
+        <span>Excellent product, works as described</span>
+      </a>
+      <span data-hook="avp-badge-linkless">Verified Purchase</span>
+      <span data-hook="review-date">Reviewed in India on 10 December 2024</span>
+      <div data-hook="review-body">
+        <span>This product completely exceeded my expectations. I've been using it for three months now and it holds up perfectly. The build quality is solid, the instructions were clear, and it does exactly what it promises. Would highly recommend to anyone looking for a reliable option.</span>
+      </div>
+      <span data-hook="helpful-vote-statement">23 people found this helpful</span>
+    </div>
+
+    <!-- Review 2: unverified, 5-star, short, no body text (video review) -->
+    <div data-hook="review" id="customer_review-R2UNVERIFIED5">
+      <a data-hook="review-title">
+        <i data-hook="review-star-rating" class="a-icon a-icon-star a-star-5">
+          <span class="a-icon-alt">5.0 out of 5 stars</span>
+        </i>
+        <span class="a-letter-space"></span>
+        <span>Great!</span>
+      </a>
+      <span data-hook="review-date">Reviewed in India on 5 January 2025</span>
+      <div data-hook="review-body">
+        <span>The media could not be loaded.</span>
+      </div>
+    </div>
+
+    <!-- Review 3: verified, 2-star, long, most helpful — most informative candidate -->
+    <div data-hook="review" id="customer_review-R3VERIFIED2STAR">
+      <a data-hook="review-title">
+        <i data-hook="review-star-rating" class="a-icon a-icon-star a-star-2">
+          <span class="a-icon-alt">2.0 out of 5 stars</span>
+        </i>
+        <span class="a-letter-space"></span>
+        <span>Disappointing after 2 months of use</span>
+      </a>
+      <span data-hook="avp-badge-linkless">Verified Purchase</span>
+      <span data-hook="review-date">Reviewed in India on 15 November 2024</span>
+      <div data-hook="review-body">
+        <span>Initially seemed great but problems started appearing after about 6 weeks. The material began showing wear far earlier than I'd expect for the price point. I reached out to the seller about the issue and they offered a partial refund which was appreciated, but the underlying quality issue remains. If you need something for occasional light use it might hold up, but for regular daily use you may be disappointed. I wanted to give this a fair shake before reviewing which is why I waited. The concept is good but the execution needs work.</span>
+      </div>
+      <span data-hook="helpful-vote-statement">47 people found this helpful</span>
+    </div>
+
+    <!-- Review 4: verified, 1-star -->
+    <div data-hook="review" id="customer_review-R4VERIFIED1STAR">
+      <a data-hook="review-title">
+        <i data-hook="review-star-rating" class="a-icon a-icon-star a-star-1">
+          <span class="a-icon-alt">1.0 out of 5 stars</span>
+        </i>
+        <span class="a-letter-space"></span>
+        <span>Broke after one week</span>
+      </a>
+      <span data-hook="avp-badge-linkless">Verified Purchase</span>
+      <span data-hook="review-date">Reviewed in India on 1 February 2025</span>
+      <div data-hook="review-body">
+        <span>Stopped working completely after 7 days. Returning immediately. Complete waste of money.</span>
+      </div>
+      <span data-hook="helpful-vote-statement">12 people found this helpful</span>
+    </div>
+
+    <!-- Review 5: verified, 4-star, with image -->
+    <div data-hook="review" id="customer_review-R5VERIFIED4STAR">
+      <a data-hook="review-title">
+        <i data-hook="review-star-rating" class="a-icon a-icon-star a-star-4">
+          <span class="a-icon-alt">4.0 out of 5 stars</span>
+        </i>
+        <span class="a-letter-space"></span>
+        <span>Solid choice, minor quibbles</span>
+      </a>
+      <span data-hook="avp-badge-linkless">Verified Purchase</span>
+      <span data-hook="review-date">Reviewed in India on 3 October 2024</span>
+      <div data-hook="review-body">
+        <span>Generally very happy with this purchase. Functionally excellent. Only minor finish issues at this price point.</span>
+      </div>
+      <img data-hook="review-image-tile" src="https://m.media-amazon.com/images/I/71abcTEST01._SL64_.jpg" alt="Review image" />
+      <span data-hook="helpful-vote-statement">8 people found this helpful</span>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

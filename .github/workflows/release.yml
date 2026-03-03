@@ -1,0 +1,53 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build Chrome extension
+        run: npm run build
+
+      - name: Package Chrome zip
+        run: |
+          cd .output
+          python3 -c "
+          import shutil, os
+          tag = os.environ['TAG']
+          shutil.make_archive(f'../honest-reviews-chrome-{tag}', 'zip', '.', 'chrome-mv3')
+          "
+        env:
+          TAG: ${{ github.ref_name }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: honest-reviews-chrome-${{ github.ref_name }}.zip
+          generate_release_notes: true
+          body: |
+            ## Installation
+
+            1. Download `honest-reviews-chrome-${{ github.ref_name }}.zip`
+            2. Unzip it
+            3. Open `chrome://extensions` → enable **Developer mode**
+            4. Click **Load unpacked** → select the unzipped `chrome-mv3` folder
