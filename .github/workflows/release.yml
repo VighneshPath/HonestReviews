@@ -29,15 +29,7 @@ jobs:
         run: npm run build
 
       - name: Package Chrome zip
-        run: |
-          cd .output
-          python3 -c "
-          import shutil, os
-          tag = os.environ['TAG']
-          shutil.make_archive(f'../honest-reviews-chrome-{tag}', 'zip', '.', 'chrome-mv3')
-          "
-        env:
-          TAG: ${{ github.ref_name }}
+        run: zip -r "honest-reviews-chrome-${{ github.ref_name }}.zip" .output/chrome-mv3/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2

@@ -5,6 +5,7 @@
 A browser extension that surfaces the data already embedded in Amazon product pages — star distribution patterns, verified purchase ratios, and review quality signals — so you can make better buying decisions.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-yellow)](https://buymeacoffee.com/NerfLongshot)
 
 ---
 
