@@ -1,21 +1,113 @@
 # Honest Reviews
 
-> **No AI, no servers, just transparency.**
-
-A browser extension that surfaces the data already embedded in Amazon product pages — star distribution patterns, verified purchase ratios, and review quality signals — so you can make better buying decisions.
+> **The Amazon review layer that doesn't lie to you.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-yellow)](https://buymeacoffee.com/NerfLongshot)
+[![Ko-Fi](https://img.shields.io/badge/KoFi-support-red)](https://ko-fi.com/vighneshpath)
 
 ---
 
-## Why?
+That 4.3-star product you're about to buy? Verified buyers might actually rate it **3.1 stars**. And 40% of those glowing reviews might have been posted in a single month.
 
-Fakespot shut down in July 2025. ReviewMeta is gone. The two biggest review analysis extensions are dead, leaving a gap filled by weak alternatives that use opaque AI to "detect fakes."
+Honest Reviews surfaces what Amazon buries — right on the product page, with no accounts, no servers, and no AI guesswork.
 
-**Our angle is different.** We don't claim to detect fake reviews. We surface the data that's already there and let *you* decide.
+---
 
-**Zero server costs. Fully client-side. Open source. No affiliate links.**
+## What it looks like
+
+### The Overview — spot the real signal instantly
+
+![Overview tab showing adjusted rating, verified purchase ratio, rating distribution histogram, and review burst warning](assets/overview.png)
+
+That product has a **listed rating of 4.3**. Honest Reviews recalculates it using only verified purchase reviews: **3.1 stars — 1.2 lower than advertised.** Below the histogram, a burst warning: 40% of all reviews arrived in a single month. That's not organic.
+
+### Sort & Filter — read the reviews that actually matter
+
+![Sort and Filter tab showing quality-scored review cards with verified badges and photos](assets/review_with_score.png)
+
+Every review gets a **quality score (0–100)** based on length, helpful votes, verified status, photos, and recency. The most informative reviews surface first — not the most recent five-stars.
+
+### Settings — full control, zero friction
+
+![Extension popup showing settings toggles and default sort order selector](assets/dropdown.png)
+
+Enable or disable per-tab, toggle quality badges, set a default sort order. Changes take effect immediately — no page reload needed.
+
+---
+
+## Why this exists
+
+Fakespot shut down in July 2025. ReviewMeta is gone. The two biggest review analysis extensions are dead, leaving a gap filled by weak alternatives that use opaque AI to "detect fakes" — a claim they can't actually back up.
+
+**Our approach is different.** We don't claim to detect fake reviews. We surface the data that's already embedded in the page and let *you* decide:
+
+- What does the distribution actually look like?
+- Do verified buyers rate this differently from everyone else?
+- Did a suspiciously large chunk of reviews arrive all at once?
+- Which reviews are actually worth reading?
+
+**Zero server costs. Fully client-side. Open source. No affiliate links. No data collection.**
+
+---
+
+## Features
+
+### Adjusted Rating
+Recalculates the star average using **verified purchase reviews only** — filtering out reviews from people who may have received the product for free or never bought it at all. The delta (e.g. *−1.2 vs listed*) tells you how much unverified reviews are moving the needle.
+
+### Rating Distribution
+Visual histogram pulled from Amazon's own data — not sampled or estimated. Two patterns to watch:
+- **Bimodal (J-curve)** — lots of 5-stars and 1-stars, few in between. Often signals fake inflation on top of a genuinely polarizing product.
+- **Overwhelmingly positive** — 90%+ five-stars is unusual for most products. Worth scrutinizing.
+
+### Review Burst Detection
+Flags when an unusually high proportion of reviews arrived in a single month. Healthy products accumulate reviews steadily over time. A burst like *"40% of all reviews posted in February 2026"* is a signal — not proof, but worth knowing.
+
+### Verified Purchase Ratio
+What percentage of the reviews analyzed carry Amazon's verified purchase badge. Below 60% means a significant portion of reviews may not come from actual buyers.
+
+### Quality Score (0–100)
+Every review is scored on six signals:
+
+| Signal | Max | What it measures |
+|--------|-----|-----------------|
+| Length | 30 | Longer reviews tend to be more informative. Full score at 600+ characters. |
+| Helpful votes | 25 | Other shoppers found this useful. Full score at 20+ votes. |
+| Verified purchase | 15 | Amazon confirmed this reviewer bought the product. |
+| Has photos | 10 | Images suggest firsthand experience. |
+| Recency | 10 | Full score within 3 months. Products change. |
+| Nuanced rating | 10 | Bonus for 2–3 star reviews — usually the most balanced and specific. |
+
+**Color coding:** 🟢 75–100 · 🔵 50–74 · 🟡 25–49 · ⚫ 0–24
+
+### Sort Modes
+| Mode | What it does |
+|------|-------------|
+| **Most Informative** *(default)* | Quality score. Surfaces long, helpful, verified reviews regardless of star rating. |
+| **Most Helpful** | Helpful vote count — what other shoppers found most useful. |
+| **Top Rated** | 5-star first. |
+| **Critical** | 1-star first. Good for finding dealbreakers fast. |
+| **Most Recent** | Newest first. Useful for products that change over time. |
+
+### Quick Filters
+**Verified only** · **Has photos** · **Detailed** (min 150 characters) — stackable, instant.
+
+---
+
+## How the reviews are fetched
+
+We fetch one page (~10 reviews) per star tier in this order: **3-star → 4-star → 2-star → 1-star → 5-star**, giving you ~50 reviews across all rating levels — not just the 8–10 Amazon shows by default. Within each tier, Amazon returns their highest helpful-vote reviews.
+
+This is a **stratified cross-section**: the most useful critical reviews, the most useful positive reviews, and everything in between — prioritizing nuanced 3-star reviews first.
+
+---
+
+## Privacy
+
+- **No data leaves your browser.** All analysis is local.
+- **No servers, no accounts, no tracking.**
+- The only network requests made are to Amazon's own `/product-reviews/` endpoint, using your existing Amazon session. No third-party requests, ever.
 
 ---
 
@@ -29,10 +121,11 @@ Fakespot shut down in July 2025. ReviewMeta is gone. The two biggest review anal
 
 ### Firefox
 1. Download the latest `honest-reviews-firefox-vX.Y.Z.zip` from [Releases](../../releases)
-2. Go to `about:debugging` → **This Firefox** → **Load Temporary Add-on**
-3. Select the `.zip` file (or any file inside the unzipped folder)
+2. Unzip it
+3. Go to `about:debugging` → **This Firefox** → **Load Temporary Add-on**
+4. Select any file inside the unzipped folder
 
-> Permanent installation requires a signed add-on. Temporary add-ons are removed when Firefox restarts.
+> Permanent Firefox installation requires a signed add-on. Temporary add-ons are removed on restart.
 
 ### Development
 ```bash
@@ -40,93 +133,8 @@ git clone https://github.com/VighneshPath/HonestReviews
 cd honest-reviews
 npm install
 npm run dev          # Chrome with HMR
-npm test             # Run all tests
+npm test             # 87 unit tests, ~1s
 ```
-
----
-
-## What the Panel Shows
-
-### Overview Tab
-
-#### Adjusted Rating
-The official Amazon star rating counts all reviews equally — including unverified purchases, reviews from people who may have received the product for free, and one-line "great!" posts. The **Adjusted Rating** recalculates the average using only the verified purchase reviews we've analyzed.
-
-> A product with a 4.3 official rating might have a 3.8 adjusted rating if most 5-star reviews are unverified.
-
-#### Verified Purchase Ratio
-What percentage of the reviews we analyzed are marked **Verified Purchase**. Low ratios (< 60%) suggest a significant portion of reviews may not come from actual buyers.
-
-#### Rating Distribution
-Visual histogram of 1–5 star percentages, sourced directly from Amazon's own histogram data (not estimated). Two patterns to watch:
-- **Bimodal (J-curve)** — lots of 5-stars and 1-stars, few 3-stars. Often indicates polarizing quality or fake 5-star inflation.
-- **Overwhelmingly positive** — 90%+ five-stars is unusual for most products and worth scrutinizing.
-
-#### Review Burst Detection
-Flags when an unusually high proportion of reviews arrived in a single month. A healthy product accumulates reviews steadily. A burst (e.g., "40% of all reviews posted in January 2024") is a signal of coordinated review campaigns — not proof, but worth noting.
-
----
-
-### Sort & Filter Tab
-
-This tab shows up to ~50 reviews fetched across all star levels, not just the 8–10 Amazon shows on the product page by default.
-
-#### How the ~50 reviews are fetched
-
-We fetch one page (~10 reviews) per star tier in this order: **3-star → 4-star → 2-star → 1-star → 5-star**. Within each tier, Amazon returns their "top reviews" (highest helpful-vote count). This gives you a stratified cross-section: the most useful critical reviews, the most useful positive reviews, and everything in between.
-
-This is **not random** — it's Amazon's own ranking within each star level. The priority order (3-star first) ensures the most nuanced reviews are fetched first, even on slower connections.
-
----
-
-#### Quality Score (0–100)
-
-Every review gets a score estimating how useful it is to read. Higher = more worth your time.
-
-| Component | Max Points | What it measures |
-|-----------|-----------|-----------------|
-| **Length** | 30 | Longer reviews tend to be more informative. Full score at 600+ characters. |
-| **Helpful votes** | 25 | Other shoppers voted this review helpful. Full score at 20+ votes. |
-| **Verified purchase** | 15 | Amazon confirmed this reviewer bought the product. |
-| **Has photos** | 10 | Reviewer included images, suggesting firsthand experience. |
-| **Recency** | 10 | Full score within 3 months. Products change; old reviews may not apply. |
-| **Nuanced rating** | 10 | Bonus for 2–3 star reviews. These tend to be the most balanced and specific. |
-
-**Color coding:**
-- 🟢 **75–100** — High quality, read this one
-- 🔵 **50–74** — Good signal
-- 🟡 **25–49** — Moderate, skim it
-- ⚫ **0–24** — Low signal (short, unverified, old, or unhelpful)
-
----
-
-#### Sort Modes
-
-| Mode | What it does |
-|------|-------------|
-| **Most Informative** *(default)* | Sorts by quality score. Surfaces long, helpful, verified reviews regardless of star rating. |
-| **Most Helpful** | Sorts by helpful vote count — what other shoppers found most useful. |
-| **Top Rated** | 5-star reviews first, then 4-star, etc. |
-| **Critical** | 1-star reviews first. Good for finding dealbreakers. |
-| **Most Recent** | Newest first. Useful for products that have changed over time. |
-
----
-
-#### Filters
-
-| Filter | What it does |
-|--------|-------------|
-| **Verified only** | Hides reviews not marked as Verified Purchase. Reduces noise from non-buyers. |
-| **Has photos** | Shows only reviews that include images. Useful for fit/size/appearance products. |
-| **Min body length** | Hides very short reviews. Set to e.g. 100 to skip "works great!" one-liners. |
-
----
-
-## Privacy
-
-- **No data leaves your browser.** All analysis runs locally.
-- **No servers, no accounts, no tracking.**
-- The extension makes same-origin requests to Amazon's own `/product-reviews/` page (using your existing Amazon session) to fetch additional reviews. No third-party requests.
 
 ---
 
@@ -134,7 +142,7 @@ Every review gets a score estimating how useful it is to read. Higher = more wor
 
 ```
 src/
-├── entrypoints/        # WXT entry points (content script, popup, background)
+├── entrypoints/        # WXT entry points (content script, popup, background, settings relay)
 ├── parsers/amazon/     # DOM parsing — all selectors in selectors.ts
 ├── stats/              # Pure statistical functions (no DOM)
 │   ├── adjusted-rating.ts
@@ -142,8 +150,8 @@ src/
 │   ├── review-quality.ts   ← quality score formula
 │   ├── review-sorter.ts
 │   └── timeline-analysis.ts
-├── components/         # Lit web components (Shadow DOM), each with a .css file
-├── storage/            # Settings types and chrome.storage helpers
+├── components/         # Lit web components (Shadow DOM), each with a paired .css file
+├── storage/            # Settings types and storage helpers
 └── utils/              # URL matching
 tests/
 ├── unit/               # Vitest unit tests (87 tests, ~1s)
@@ -154,20 +162,20 @@ tests/
 
 ## Limitations
 
-- **Review count**: We analyze ~50 reviews (one page per star tier). Products with thousands of reviews may not be fully represented.
-- **Language**: Optimized for English. Date parsing may fail for non-English locales.
-- **Amazon locale changes**: Amazon occasionally changes their DOM. If something breaks, the fix is in [`selectors.ts`](src/parsers/amazon/selectors.ts).
-- **Fake review detection**: We don't do this. Genuine fake detection requires ML and historical data neither we nor you have access to. What we offer instead is transparency into what the data shows.
+- **Review count**: ~50 reviews analyzed (one page per star tier). Products with thousands of reviews are not fully represented.
+- **Language**: Optimized for English. Date parsing may degrade on non-English Amazon locales.
+- **DOM changes**: Amazon occasionally updates their page structure. If something breaks, the fix is almost always in [`selectors.ts`](src/parsers/amazon/selectors.ts).
+- **Not fake-review detection**: Genuine fake detection requires ML and historical data. We don't pretend otherwise. What we offer is transparency into what the visible data shows.
 
 ---
 
 ## Contributing
 
-PRs welcome. Most impactful:
+PRs welcome. Most impactful areas:
 
 1. **Selector updates** — when Amazon changes their DOM, update `src/parsers/amazon/selectors.ts`
-2. **More locales** — test on non-.in/.com Amazon sites, fix date parsing
-3. **Quality formula tuning** — improve `src/stats/review-quality.ts`
+2. **More locales** — test on non-.com Amazon domains, fix date parsing edge cases
+3. **Quality formula tuning** — improve the scoring in `src/stats/review-quality.ts`
 
 Run `npm test` before submitting.
 
