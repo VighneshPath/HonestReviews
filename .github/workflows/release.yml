@@ -35,7 +35,7 @@ jobs:
         run: zip -r "honest-reviews-chrome-${{ github.ref_name }}.zip" .output/chrome-mv3/
 
       - name: Package Firefox zip
-        run: zip -r "honest-reviews-firefox-${{ github.ref_name }}.zip" .output/firefox-mv3/
+        run: zip -r "honest-reviews-firefox-${{ github.ref_name }}.zip" .output/firefox-mv2/
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -55,5 +55,6 @@ jobs:
 
             ### Firefox
             1. Download `honest-reviews-firefox-${{ github.ref_name }}.zip`
-            2. Open `about:debugging` → **This Firefox** → **Load Temporary Add-on**
-            3. Select the zip file directly
+            2. Unzip it
+            3. Open `about:debugging` → **This Firefox** → **Load Temporary Add-on**
+            4. Select any file inside the unzipped folder
