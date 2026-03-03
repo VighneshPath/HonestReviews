@@ -32,7 +32,7 @@ Coming soon.
 
 ### Development
 ```bash
-git clone https://github.com/your-org/honest-reviews
+git clone https://github.com/VighneshPath/HonestReviews
 cd honest-reviews
 npm install
 npm run dev          # Chrome with HMR

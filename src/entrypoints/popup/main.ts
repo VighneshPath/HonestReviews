@@ -73,14 +73,14 @@ function render(settings: UserSettings, onProductPage: boolean) {
     <div class="support-section">
       <div class="support-label">Support development</div>
       <div class="support-links">
-        <a href="https://buymeacoffee.com" target="_blank" class="support-link support-link-coffee">☕ Buy Me a Coffee</a>
+        <a href="https://buymeacoffee.com/NerfLongshot" target="_blank" class="support-link support-link-coffee">☕ Buy Me a Coffee</a>
         <a href="https://github.com/sponsors" target="_blank" class="support-link support-link-github">♥ Sponsor</a>
-        <a href="https://ko-fi.com" target="_blank" class="support-link support-link-kofi">Ko-fi</a>
+        <a href="https://ko-fi.com/vighneshpath" target="_blank" class="support-link support-link-kofi">Ko-fi</a>
       </div>
     </div>
 
     <div class="popup-footer">
-      <a href="https://github.com/your-org/honest-reviews" target="_blank">Open Source on GitHub</a>
+      <a href="https://github.com/VighneshPath/HonestReviews" target="_blank">Open Source on GitHub</a>
       · No affiliate links · No data collection
     </div>
   `;
