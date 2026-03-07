@@ -45,7 +45,7 @@ export default defineContentScript({
         lastVisibleCount = visible.length;
 
         const all = merged(visible);
-        const adjustedRating = calculateAdjustedRating(all, productData.averageRating);
+        const adjustedRating = calculateAdjustedRating(all, productData.averageRating, productData.starDistribution);
         const distribution = analyzeDistribution(productData.starDistribution);
         const timeline = analyzeTimeline(all);
 
@@ -74,7 +74,7 @@ export default defineContentScript({
         fetchedReviews = batch;
         const all = merged(parseReviewList(document));
         panel.reviews = all;
-        panel.adjustedRating = calculateAdjustedRating(all, productData.averageRating);
+        panel.adjustedRating = calculateAdjustedRating(all, productData.averageRating, productData.starDistribution);
         panel.timeline = analyzeTimeline(all);
         panel.fetchedCount = batch.length;
       })

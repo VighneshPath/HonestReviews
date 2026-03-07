@@ -1,4 +1,5 @@
 import type { ParsedReview } from '../parsers/amazon/review-list.js';
+import type { StarDistribution } from '../parsers/amazon/product-page.js';
 
 export interface AdjustedRatingResult {
   /** Weighted average of verified-purchase reviews only */
@@ -12,35 +13,66 @@ export interface AdjustedRatingResult {
 }
 
 /**
- * Calculate a rating using only verified-purchase reviews.
- * Compares against the official Amazon rating to surface discrepancies.
+ * Calculate a rating using only verified-purchase reviews, weighted by the
+ * actual star distribution from Amazon's histogram.
+ *
+ * Naive averaging of our stratified sample (10 reviews per tier) always drifts
+ * toward 3.0.  Instead we:
+ *   1. Compute the verified rate per tier from our sample
+ *      (e.g. 8/10 five-star reviews are verified → 80%)
+ *   2. Weight those rates by the real histogram percentages
+ *      (e.g. 65% of all reviews are five-star)
+ *   3. Produce a rating that reflects both the true distribution and the
+ *      verified-purchase signal from each tier
+ *
+ * Falls back to a plain average when no histogram data is available.
  */
 export function calculateAdjustedRating(
   reviews: ParsedReview[],
   officialRating: number | null,
+  starDistribution: StarDistribution[] = [],
 ): AdjustedRatingResult {
-  const verified = reviews.filter((r) => r.isVerified && r.rating !== null);
+  const verifiedWithRating = reviews.filter((r) => r.isVerified && r.rating !== null);
 
-  if (verified.length === 0) {
-    return {
-      verifiedRating: null,
-      verifiedCount: 0,
-      totalCount: reviews.length,
-      delta: null,
-    };
+  if (verifiedWithRating.length === 0) {
+    return { verifiedRating: null, verifiedCount: 0, totalCount: reviews.length, delta: null };
   }
 
-  const sum = verified.reduce((acc, r) => acc + (r.rating ?? 0), 0);
-  const verifiedRating = Math.round((sum / verified.length) * 10) / 10;
+  let verifiedRating: number;
 
+  if (starDistribution.length > 0) {
+    let weightedSum = 0;
+    let totalWeight = 0;
+
+    for (const { stars, percentage } of starDistribution) {
+      if (percentage === 0) continue;
+      const tierReviews = reviews.filter((r) => r.rating === stars);
+      if (tierReviews.length === 0) continue;
+
+      const verifiedRate = tierReviews.filter((r) => r.isVerified).length / tierReviews.length;
+      const weight = percentage * verifiedRate;
+      weightedSum += stars * weight;
+      totalWeight += weight;
+    }
+
+    if (totalWeight === 0) {
+      // All sampled tiers had 0% verified — fall through to simple average
+      verifiedRating = verifiedWithRating.reduce((acc, r) => acc + (r.rating ?? 0), 0) / verifiedWithRating.length;
+    } else {
+      verifiedRating = weightedSum / totalWeight;
+    }
+  } else {
+    // No histogram — plain average (page-visible reviews before fetch completes)
+    verifiedRating = verifiedWithRating.reduce((acc, r) => acc + (r.rating ?? 0), 0) / verifiedWithRating.length;
+  }
+
+  verifiedRating = Math.round(verifiedRating * 10) / 10;
   const delta =
-    officialRating !== null
-      ? Math.round((verifiedRating - officialRating) * 10) / 10
-      : null;
+    officialRating !== null ? Math.round((verifiedRating - officialRating) * 10) / 10 : null;
 
   return {
     verifiedRating,
-    verifiedCount: verified.length,
+    verifiedCount: verifiedWithRating.length,
     totalCount: reviews.length,
     delta,
   };
