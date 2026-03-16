@@ -2,6 +2,7 @@ import { parseFlipkartReviewList } from './review-list.js';
 import type { ParsedReview } from './review-list.js';
 import { parseHistogramFromText } from './product-page.js';
 import type { StarDistribution } from '../amazon/product-page.js';
+import { sleep, deduplicateReviews } from '../fetch-utils.js';
 
 const PAGE_DELAY_MS = 600;
 const LOG = '[HonestReviews]';
@@ -91,11 +92,7 @@ export async function fetchFlipkartReviews(
       continue;
     }
 
-    const fresh = pageReviews
-      .filter((r) => !seen.has(r.id))
-      .map((r) => ({ ...r, element: null }));
-
-    fresh.forEach((r) => seen.add(r.id));
+    const fresh = deduplicateReviews(pageReviews, seen);
     all.push(...fresh);
 
     console.log(LOG, `Flipkart ${label}: +${fresh.length} new (${all.length} total)`);
@@ -118,6 +115,3 @@ export async function fetchFlipkartReviews(
   return all;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}

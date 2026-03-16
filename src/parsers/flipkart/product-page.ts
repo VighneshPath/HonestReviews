@@ -1,4 +1,5 @@
 import type { ProductPageData, StarDistribution } from '../amazon/product-page.js';
+import { queryFirst } from '../dom-utils.js';
 
 export type { ProductPageData, StarDistribution };
 
@@ -115,22 +116,17 @@ export function parseHistogramFromText(text: string): StarDistribution[] {
 }
 
 function findRatingsSection(doc: Document): Element | null {
-  const selectors = [
+  const el = queryFirst(doc, [
     '._3LWZlK',     // legacy rating badge + surrounding section
     '._1YokD2',     // legacy ratings & reviews section
     '._3Ay6Sb',     // legacy histogram container
     '[class*="ratingHistogram"]',
     '[class*="ratingsReviews"]',
-  ];
-  for (const sel of selectors) {
-    try {
-      const el = doc.querySelector(sel);
-      if (el) return el;
-    } catch { /* skip */ }
-  }
+  ]);
+  if (el) return el;
+
   // Fallback: find a section whose text includes the star histogram pattern
-  const allDivs = doc.querySelectorAll('div');
-  for (const div of allDivs) {
+  for (const div of doc.querySelectorAll('div')) {
     if (/[1-5]\s*[\u2605\u2606]\s*\d+/.test(div.textContent ?? '') &&
         (div.textContent?.length ?? 0) < 500) {
       return div;

@@ -6,6 +6,9 @@
  * Last verified: 2026-03 against amazon.in
  */
 
+// Re-export shared DOM query helpers so existing Amazon parser imports keep working.
+export { queryFirst, queryAll } from '../dom-utils.js';
+
 export const SELECTORS = {
   histogram: {
     /**
@@ -123,38 +126,3 @@ export const SELECTORS = {
   },
 } as const;
 
-/**
- * Try each selector in an array, returning the first matching element.
- */
-export function queryFirst(
-  root: Document | Element,
-  selectors: readonly string[],
-): Element | null {
-  for (const sel of selectors) {
-    try {
-      const el = root.querySelector(sel);
-      if (el) return el;
-    } catch {
-      // Invalid selector — skip
-    }
-  }
-  return null;
-}
-
-/**
- * Try each selector in an array, returning all matches from the first working selector.
- */
-export function queryAll(
-  root: Document | Element,
-  selectors: readonly string[],
-): Element[] {
-  for (const sel of selectors) {
-    try {
-      const els = root.querySelectorAll(sel);
-      if (els.length > 0) return Array.from(els);
-    } catch {
-      // Invalid selector — skip
-    }
-  }
-  return [];
-}
