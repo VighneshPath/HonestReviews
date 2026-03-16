@@ -156,7 +156,10 @@ function parseTitle(card: Element): string {
 
 /**
  * Body: look for the review text container.
- * On product page the body is truncated; the full text is in an <a> wrapper.
+ * On the product page, Flipkart wraps the review body in an <a> and appends
+ * a trailing "…more" / "...more" to indicate truncation. We strip that marker
+ * so the displayed text is clean; background-fetched reviews from the
+ * /product-reviews/ page contain the full untruncated body.
  */
 function parseBody(card: Element): string {
   const selectors = [
@@ -168,7 +171,7 @@ function parseBody(card: Element): string {
   for (const sel of selectors) {
     try {
       const el = card.querySelector(sel);
-      if (el?.textContent?.trim()) return el.textContent.trim();
+      if (el?.textContent?.trim()) return stripFlipkartReadMore(el.textContent.trim());
     } catch { /* skip */ }
   }
 
@@ -178,9 +181,21 @@ function parseBody(card: Element): string {
   if (rfIdx >= 0 && rfIdx + 1 < children.length) {
     const bodyEl = children[rfIdx + 1];
     const text = bodyEl.textContent?.trim() ?? '';
-    if (text && !text.includes('Helpful for') && !/verified/i.test(text)) return text;
+    if (text && !text.includes('Helpful for') && !/verified/i.test(text)) {
+      return stripFlipkartReadMore(text);
+    }
   }
   return '';
+}
+
+/**
+ * Flipkart truncates review bodies on the product page with a trailing
+ * "...more" or "…more" (where "more" is an anchor link). Strip it so the
+ * partial text doesn't end with a confusing non-interactive "more" label.
+ */
+export function stripFlipkartReadMore(text: string): string {
+  // Match either 2+ regular dots OR a single unicode ellipsis (…) before "more"
+  return text.replace(/(?:\.{2,}|…)\s*more\s*$/i, '').trimEnd();
 }
 
 function parseReviewerName(card: Element): string {

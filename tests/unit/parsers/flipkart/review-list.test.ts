@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { parseFlipkartReviewList } from '../../../../src/parsers/flipkart/review-list.js';
+import { parseFlipkartReviewList, stripFlipkartReadMore } from '../../../../src/parsers/flipkart/review-list.js';
 
 // Product-page format: review cards use vQDoqR class
 function makeProductPageHtml(): string {
@@ -18,6 +18,20 @@ function makeProductPageHtml(): string {
       <div class="v1zwn21k v1zwn26">Battery drains fast.</div>
       <div class="v1zwn21k v1zwn27">Priya Singh</div>
       <div class="v1zwn21l v1zwn28">1 year ago</div>
+    </div>
+  </body></html>`;
+}
+
+// Product-page format with truncated body (Flipkart wraps in <a> with "...more")
+function makeTruncatedProductPageHtml(): string {
+  return `<html><body>
+    <div class="vQDoqR">
+      <div dir="auto" class="css-1rynq56">5</div>
+      <div class="v1zwn21k v1zwn24">Amazing watch</div>
+      <div class="v1zwn21k v1zwn26"><a href="/product-reviews/itm123">Battery life is excellent and the display looks gorgeous...more</a></div>
+      <div class="v1zwn21k v1zwn27">Suresh Patel</div>
+      <div class="v1zwn21l v1zwn28">Verified Buyer</div>
+      <div class="v1zwn21l v1zwn28">2 months ago</div>
     </div>
   </body></html>`;
 }
@@ -183,5 +197,39 @@ describe('parseFlipkartReviewList — SSR format (css-146c3p1 fallback)', () => 
   it('generates unique stable IDs', () => {
     const reviews = parse(makeSsrHtml());
     expect(reviews[0].id).not.toBe(reviews[1].id);
+  });
+});
+
+describe('parseFlipkartReviewList — truncated product-page bodies', () => {
+  it('strips trailing "...more" from body so panel shows clean text', () => {
+    const reviews = parse(makeTruncatedProductPageHtml());
+    expect(reviews[0].body).toBe('Battery life is excellent and the display looks gorgeous');
+    expect(reviews[0].body).not.toMatch(/more$/i);
+  });
+});
+
+describe('stripFlipkartReadMore', () => {
+  it('strips "...more" suffix', () => {
+    expect(stripFlipkartReadMore('Great product...more')).toBe('Great product');
+  });
+
+  it('strips unicode ellipsis "…more" suffix', () => {
+    expect(stripFlipkartReadMore('Great product…more')).toBe('Great product');
+  });
+
+  it('strips with trailing whitespace', () => {
+    expect(stripFlipkartReadMore('Great product...more  ')).toBe('Great product');
+  });
+
+  it('is case-insensitive', () => {
+    expect(stripFlipkartReadMore('Great product...More')).toBe('Great product');
+  });
+
+  it('does not modify text without truncation marker', () => {
+    expect(stripFlipkartReadMore('Great product, no issues.')).toBe('Great product, no issues.');
+  });
+
+  it('does not strip standalone "more" without preceding dots', () => {
+    expect(stripFlipkartReadMore('I want more')).toBe('I want more');
   });
 });
