@@ -46,3 +46,11 @@ export function detectSite(url: string): SiteAdapter | null {
   }
   return null;
 }
+
+/**
+ * Returns true if the URL is a product page on any supported site.
+ * Use this in the background script and popup — avoids importing individual site modules.
+ */
+export function isKnownProductPage(url: string): boolean {
+  return detectSite(url) !== null;
+}

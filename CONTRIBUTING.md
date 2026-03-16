@@ -62,14 +62,26 @@ Stats modules live in `src/stats/`. All pure functions, no DOM access. Easy to t
 
 **Always include tests** for algorithm changes. The test suite runs in <1 second.
 
-### 4. UI/UX improvements
+### 4. Adding a new site
+
+The site registry in `src/sites/index.ts` contains a step-by-step contributor guide at the top of the file. The short version:
+
+1. Create `src/utils/<name>-url.ts` — URL pattern matching and product ID extraction
+2. Create `src/parsers/<name>/` — `product-page.ts`, `review-list.ts`, `review-fetcher.ts`
+   Import shared types from `src/parsers/review.ts` and `src/parsers/product.ts`
+3. Create `src/sites/<name>.ts` — implement `createXxxAdapter(url): SiteAdapter | null`
+4. Register in `src/sites/index.ts` — add to `SITE_FACTORIES` and `ALL_SITE_MATCHES`
+5. Add host permissions to `wxt.config.ts` — required for background fetch
+
+`content.ts`, `background.ts`, and `popup/main.ts` require **no changes** — they consume the registry.
+
+### 5. UI/UX improvements
 
 Lit web components are in `src/components/`. Each uses Shadow DOM, so Amazon CSS can't interfere.
 
 - `overlay-panel.ts` — the main injected panel
 - `star-histogram.ts` — SVG bar chart
 - `filter-bar.ts` — sort/filter controls
-- `quality-badge.ts` — per-review badge
 - `adjusted-rating.ts` — verified rating display
 
 Keep components accessible (ARIA attributes). Keep the visual style minimal — Amazon pages are busy enough.

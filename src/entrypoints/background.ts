@@ -1,16 +1,16 @@
-import { isProductPage } from '../utils/amazon-url.js';
+import { isKnownProductPage } from '../sites/index.js';
 
 export default defineBackground({
   // Firefox MV3 requires persistent: false for service workers
   persistent: false,
 
   main() {
-    // Update badge when navigating to Amazon product pages
+    // Clear the badge when navigating away from any supported product page.
     browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
       if (changeInfo.status !== 'complete') return;
       if (!tab.url) return;
 
-      if (!isProductPage(tab.url)) {
+      if (!isKnownProductPage(tab.url)) {
         browser.action.setBadgeText({ tabId, text: '' });
       }
     });

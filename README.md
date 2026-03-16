@@ -144,7 +144,7 @@ git clone https://github.com/VighneshPath/HonestReviews
 cd honest-reviews
 npm install
 npm run dev          # Chrome with HMR
-npm test             # ~106 unit tests, ~1s
+npm test             # 181 unit tests, ~1s
 ```
 
 ---
@@ -154,7 +154,16 @@ npm test             # ~106 unit tests, ~1s
 ```
 src/
 ├── entrypoints/        # WXT entry points (content script, popup, background, settings relay)
+├── sites/              # Site registry — the single place to add new site support
+│   ├── adapter.ts      # SiteAdapter interface (the contract every site implements)
+│   ├── index.ts        # SITE_FACTORIES registry, detectSite(), isKnownProductPage()
+│   ├── amazon.ts       # createAmazonAdapter() factory
+│   └── flipkart.ts     # createFlipkartAdapter() factory
 ├── parsers/
+│   ├── review.ts       # ParsedReview interface (site-neutral)
+│   ├── product.ts      # ProductPageData + StarDistribution interfaces (site-neutral)
+│   ├── dom-utils.ts    # Generic DOM query helpers (queryFirst, queryAll)
+│   ├── fetch-utils.ts  # Shared fetch helpers (sleep, deduplicateReviews)
 │   ├── amazon/         # Amazon DOM parsing — all selectors in selectors.ts
 │   └── flipkart/       # Flipkart DOM parsing (product page, review list, review fetcher)
 ├── stats/              # Pure statistical functions (no DOM)
@@ -165,9 +174,9 @@ src/
 │   └── timeline-analysis.ts
 ├── components/         # Lit web components (Shadow DOM), each with a paired .css file
 ├── storage/            # Settings types and storage helpers
-└── utils/              # URL matching (amazon-url.ts, flipkart-url.ts)
+└── utils/              # URL matching helpers (amazon-url.ts, flipkart-url.ts)
 tests/
-├── unit/               # Vitest unit tests (~106 tests, ~1s)
+├── unit/               # Vitest unit tests (181 tests, ~1s)
 └── fixtures/           # Saved HTML snapshots
 ```
 
@@ -189,7 +198,7 @@ PRs welcome. Most impactful areas:
 
 1. **Amazon selector updates** — when Amazon changes their DOM, update `src/parsers/amazon/selectors.ts`
 2. **Flipkart selector updates** — update `src/parsers/flipkart/review-list.ts` and `product-page.ts`
-3. **More sites** — the `SiteAdapter` pattern in `content.ts` makes adding new sites straightforward
+3. **More sites** — see `src/sites/index.ts` for the contributor guide; adding a site touches at most two existing files
 4. **More locales** — test on non-.com Amazon domains, fix date parsing edge cases
 5. **Quality formula tuning** — improve the scoring in `src/stats/review-quality.ts`
 

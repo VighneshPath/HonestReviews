@@ -1,7 +1,7 @@
 {
   "name": "honest-reviews",
   "version": "0.1.0",
-  "description": "Browser extension that surfaces Amazon review data transparently — no AI, no servers, just transparency.",
+  "description": "Browser extension that surfaces Amazon and Flipkart review data transparently — no AI, no servers, just transparency.",
   "license": "MIT",
   "private": true,
   "type": "module",

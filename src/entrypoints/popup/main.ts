@@ -1,13 +1,12 @@
 import { loadSettings, saveSettings } from '../../storage/settings.js';
-import { isProductPage } from '../../utils/amazon-url.js';
-import { isFlipkartProductPage } from '../../utils/flipkart-url.js';
+import { isKnownProductPage } from '../../sites/index.js';
 import type { UserSettings } from '../../storage/settings.js';
 
 async function main() {
   const settings = await loadSettings();
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   const url = tab?.url ?? '';
-  const onProductPage = isProductPage(url) || isFlipkartProductPage(url);
+  const onProductPage = isKnownProductPage(url);
 
   applySettings(settings, onProductPage);
   bindEvents();

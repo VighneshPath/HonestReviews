@@ -42,6 +42,7 @@ export default defineConfig({
             '*://*.amazon.co.jp/*',
             '*://*.amazon.in/*',
             '*://*.flipkart.com/*',
+            '*://flipkart.com/*',
           ],
         }
       : {
@@ -57,6 +58,7 @@ export default defineConfig({
             '*://*.amazon.co.jp/*',
             '*://*.amazon.in/*',
             '*://*.flipkart.com/*',
+            '*://flipkart.com/*',
           ],
         }),
 
