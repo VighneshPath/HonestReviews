@@ -1,16 +1,8 @@
 import { SELECTORS, queryFirst, queryAll } from './selectors.js';
 import { parseRating, parseStarLabel, parsePercentage, parseReviewCount, textContent } from './utils.js';
+import type { StarDistribution, ProductPageData } from '../product.js';
 
-export interface StarDistribution {
-  stars: number;
-  percentage: number;
-}
-
-export interface ProductPageData {
-  averageRating: number | null;
-  totalRatings: number | null;
-  starDistribution: StarDistribution[];
-}
+export type { StarDistribution, ProductPageData };
 
 export function parseProductPage(doc: Document): ProductPageData {
   return {

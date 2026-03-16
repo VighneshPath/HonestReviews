@@ -1,6 +1,5 @@
 import { browser } from 'wxt/browser';
-import { AMAZON_MATCHES } from '../utils/amazon-url.js';
-import { FLIPKART_MATCHES } from '../utils/flipkart-url.js';
+import { ALL_SITE_MATCHES } from '../sites/index.js';
 import { DEFAULT_SETTINGS } from '../storage/types.js';
 
 /**
@@ -15,7 +14,7 @@ import { DEFAULT_SETTINGS } from '../storage/types.js';
  * world content scripts, so we bridge everything through window.postMessage.
  */
 export default defineContentScript({
-  matches: [...AMAZON_MATCHES, ...FLIPKART_MATCHES],
+  matches: ALL_SITE_MATCHES,
   runAt: 'document_start',
 
   main() {

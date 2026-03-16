@@ -1,5 +1,5 @@
-import type { ParsedReview } from '../parsers/amazon/review-list.js';
-import type { StarDistribution } from '../parsers/amazon/product-page.js';
+import type { ParsedReview } from '../parsers/review.js';
+import type { StarDistribution } from '../parsers/product.js';
 
 export interface AdjustedRatingResult {
   /** Weighted average of verified-purchase reviews only */

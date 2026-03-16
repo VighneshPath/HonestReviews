@@ -1,4 +1,4 @@
-import type { ParsedReview } from '../parsers/amazon/review-list.js';
+import type { ParsedReview } from '../parsers/review.js';
 
 export type ReviewSignal = 'length' | 'helpfulVotes' | 'verified' | 'hasImages' | 'recency' | 'nuancedRating';
 

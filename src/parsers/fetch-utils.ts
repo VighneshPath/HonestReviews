@@ -1,4 +1,4 @@
-import type { ParsedReview } from './amazon/review-list.js';
+import type { ParsedReview } from './review.js';
 
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));

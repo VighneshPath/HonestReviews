@@ -1,104 +1,20 @@
-// Amazon
-import { isProductPage as isAmazonProductPage, extractAsin, AMAZON_MATCHES } from '../utils/amazon-url.js';
-import { parseProductPage as parseAmazonProductPage } from '../parsers/amazon/product-page.js';
-import { parseReviewList as parseAmazonReviewList } from '../parsers/amazon/review-list.js';
-import { fetchMoreReviews as fetchAmazonReviews } from '../parsers/amazon/review-fetcher.js';
-// Flipkart
-import {
-  isFlipkartProductPage,
-  extractFlipkartPid,
-  extractFlipkartReviewsUrl,
-  FLIPKART_MATCHES,
-} from '../utils/flipkart-url.js';
-import { parseFlipkartProductPage } from '../parsers/flipkart/product-page.js';
-import { parseFlipkartReviewList } from '../parsers/flipkart/review-list.js';
-import { fetchFlipkartReviews } from '../parsers/flipkart/review-fetcher.js';
-// Shared
-import type { ParsedReview } from '../parsers/amazon/review-list.js';
-import type { ProductPageData, StarDistribution } from '../parsers/amazon/product-page.js';
+import { detectSite, ALL_SITE_MATCHES } from '../sites/index.js';
+import type { ParsedReview } from '../parsers/review.js';
+import type { ProductPageData, StarDistribution } from '../parsers/product.js';
 import { calculateAdjustedRating } from '../stats/adjusted-rating.js';
 import { analyzeDistribution } from '../stats/distribution-analysis.js';
 import { analyzeTimeline } from '../stats/timeline-analysis.js';
 import '../components/overlay-panel.js';
 import type { OverlayPanel } from '../components/overlay-panel.js';
-// Import only from types.ts — not settings.ts, which pulls in wxt/browser polyfill
-// (incompatible with MAIN world; all storage access goes through the isolated-world relay).
-import type { UserSettings } from '../storage/types.js';
+// Import only from storage/types.ts — not storage/settings.ts, which pulls in the
+// wxt/browser polyfill (incompatible with MAIN world). All storage I/O is bridged
+// through settings-relay.content.ts via window.postMessage.
+import type { UserSettings, PanelPosition } from '../storage/types.js';
 import { DEFAULT_SETTINGS } from '../storage/types.js';
 import type { ReviewSignal } from '../stats/review-quality.js';
-import type { PanelPosition } from '../storage/types.js';
-
-/**
- * Per-site plugin. Each site (Amazon, Flipkart, …) provides one implementation.
- * content.ts uses only this interface — adding a new site requires no changes here.
- */
-interface SiteAdapter {
-  /** Parse the product summary (rating histogram, average, count) from the current page. */
-  parseProductPage: (doc: Document) => ProductPageData;
-  /** Parse the reviews currently visible in the DOM. */
-  parseReviewList: (doc: Document) => ParsedReview[];
-  /**
-   * Background-fetch additional reviews, calling `onPage` after each batch.
-   * `id` is site-specific (ASIN for Amazon, reviews base URL for Flipkart).
-   * `histogram` in onPage is optional — only Flipkart provides it from the reviews page.
-   */
-  fetchReviews: (
-    id: string,
-    signal: AbortSignal,
-    onPage: (batch: ParsedReview[], tier: number, histogram?: StarDistribution[]) => void,
-  ) => Promise<ParsedReview[]>;
-  /** Returns the fetch identifier when the DOM is ready, or null if unavailable. */
-  getReviewsFetchId: () => string | null;
-  /** CSS selectors for the review container — used to detect when reviews have loaded. */
-  reviewContainerSelectors: string[];
-  /**
-   * Quality scoring signals available on this site. Scores are normalised to 100
-   * against the max achievable with these signals so that sites with fewer signals
-   * (e.g. Flipkart has no helpful-votes data) compare fairly.
-   * Defaults to ALL_SIGNALS when omitted.
-   */
-  reviewSignals?: ReadonlySet<ReviewSignal>;
-}
-
-function detectSite(url: string): SiteAdapter | null {
-  if (isAmazonProductPage(url)) {
-    const asin = extractAsin(url);
-    if (!asin) return null;
-    return {
-      parseProductPage: parseAmazonProductPage,
-      parseReviewList: parseAmazonReviewList,
-      fetchReviews: fetchAmazonReviews,
-      getReviewsFetchId: () => asin,
-      reviewContainerSelectors: [
-        '#cm-cr-dp-review-list',
-        '[data-hook="cr-dp-review-list"]',
-        '#customer-reviews-content',
-        // Individual review elements — used as poll fallback when container hasn't loaded yet
-        '[data-hook="review"]',
-        '[id^="customer_review-"]',
-      ],
-    };
-  }
-  if (isFlipkartProductPage(url)) {
-    const pid = extractFlipkartPid(url);
-    if (!pid) return null;
-    return {
-      parseProductPage: parseFlipkartProductPage,
-      parseReviewList: parseFlipkartReviewList,
-      fetchReviews: fetchFlipkartReviews,
-      getReviewsFetchId: () => extractFlipkartReviewsUrl(document, pid),
-      reviewContainerSelectors: [
-        'div.vQDoqR',
-        '[class*="reviewCard"]',
-      ],
-      reviewSignals: new Set<ReviewSignal>(['length', 'verified', 'recency', 'nuancedRating']),
-    };
-  }
-  return null;
-}
 
 export default defineContentScript({
-  matches: [...AMAZON_MATCHES, ...FLIPKART_MATCHES],
+  matches: ALL_SITE_MATCHES,
   runAt: 'document_idle',
   world: 'MAIN',
 

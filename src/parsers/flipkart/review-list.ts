@@ -1,4 +1,4 @@
-import type { ParsedReview } from '../amazon/review-list.js';
+import type { ParsedReview } from '../review.js';
 
 export type { ParsedReview };
 

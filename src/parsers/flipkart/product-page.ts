@@ -1,4 +1,4 @@
-import type { ProductPageData, StarDistribution } from '../amazon/product-page.js';
+import type { ProductPageData, StarDistribution } from '../product.js';
 import { queryFirst } from '../dom-utils.js';
 
 export type { ProductPageData, StarDistribution };

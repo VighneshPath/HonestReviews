@@ -1,6 +1,6 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
-import type { StarDistribution } from '../parsers/amazon/product-page.js';
+import type { StarDistribution } from '../parsers/product.js';
 import type { DistributionAnalysis } from '../stats/distribution-analysis.js';
 import { PATTERN_LABELS, PATTERN_COLORS } from '../stats/distribution-analysis.js';
 import styles from './star-histogram.css?inline';

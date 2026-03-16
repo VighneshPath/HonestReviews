@@ -1,4 +1,4 @@
-import type { ParsedReview } from '../parsers/amazon/review-list.js';
+import type { ParsedReview } from '../parsers/review.js';
 import { scoreReview } from './review-quality.js';
 
 export type SortMode = 'most-informative' | 'most-helpful' | 'recent' | 'top-rated' | 'critical';

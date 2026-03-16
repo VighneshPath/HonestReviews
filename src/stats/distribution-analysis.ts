@@ -1,4 +1,4 @@
-import type { StarDistribution } from '../parsers/amazon/product-page.js';
+import type { StarDistribution } from '../parsers/product.js';
 
 export type DistributionPattern =
   | 'overwhelmingly-positive'

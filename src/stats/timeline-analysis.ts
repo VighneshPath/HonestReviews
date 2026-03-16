@@ -1,4 +1,4 @@
-import type { ParsedReview } from '../parsers/amazon/review-list.js';
+import type { ParsedReview } from '../parsers/review.js';
 
 export interface TimelineAnalysis {
   /** Whether a suspicious review burst was detected */

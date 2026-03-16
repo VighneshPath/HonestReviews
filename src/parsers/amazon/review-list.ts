@@ -1,23 +1,8 @@
 import { SELECTORS, queryFirst, queryAll } from './selectors.js';
 import { parseRating, parseHelpfulVotes, parseReviewDate, textContent } from './utils.js';
+import type { ParsedReview } from '../review.js';
 
-export interface ParsedReview {
-  id: string;
-  /** DOM element on the current page. null for reviews fetched from other pages. */
-  element: Element | null;
-  rating: number | null;
-  title: string;
-  body: string;
-  isVerified: boolean;
-  date: Date | null;
-  dateText: string;
-  helpfulVotes: number;
-  hasImages: boolean;
-  /** CDN URLs of review photo thumbnails (empty if none or not parseable). */
-  images: string[];
-  reviewerName: string;
-  bodyLength: number;
-}
+export type { ParsedReview };
 
 export function parseReviewList(doc: Document): ParsedReview[] {
   const containers = queryAll(doc, SELECTORS.review.container);

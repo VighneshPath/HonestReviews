@@ -1,7 +1,7 @@
 import { LitElement, html, unsafeCSS } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
-import type { ProductPageData } from '../parsers/amazon/product-page.js';
-import type { ParsedReview } from '../parsers/amazon/review-list.js';
+import type { ProductPageData } from '../parsers/product.js';
+import type { ParsedReview } from '../parsers/review.js';
 import type { AdjustedRatingResult } from '../stats/adjusted-rating.js';
 import type { DistributionAnalysis } from '../stats/distribution-analysis.js';
 import type { TimelineAnalysis } from '../stats/timeline-analysis.js';
