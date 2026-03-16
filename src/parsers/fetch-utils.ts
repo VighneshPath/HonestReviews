@@ -5,9 +5,13 @@ export function sleep(ms: number): Promise<void> {
 }
 
 /**
- * Filter reviews not yet in `seen`, strip DOM element references (they belong
- * to a fetched document, not the current page), and register their IDs in `seen`.
- * Mutates `seen` as a side effect.
+ * Given a batch of freshly parsed reviews:
+ *   1. Discard any whose ID is already in `seen` (cross-page deduplication).
+ *   2. Set `element` to null — fetched elements belong to a temporary Document,
+ *      not the live page DOM, so keeping the reference would be a memory leak.
+ *   3. Register the new IDs in `seen` for the next batch.
+ *
+ * Mutates `seen` in place. Designed to be called once per fetched page.
  */
 export function deduplicateReviews(
   reviews: ParsedReview[],

@@ -56,12 +56,8 @@ function detectBurst(byMonth: Record<string, number>, total: number): string | n
   for (const [month, count] of Object.entries(byMonth)) {
     const share = count / total;
     if (share >= 0.4 && count >= 3) {
-      const [year, mo] = month.split('-');
-      const monthName = new Date(
-        parseInt(year ?? '2000'),
-        parseInt(mo ?? '1') - 1,
-        1,
-      ).toLocaleString('en', { month: 'long', year: 'numeric' });
+      // month is "YYYY-MM" — appending "-01" gives a valid ISO date string
+      const monthName = new Date(`${month}-01`).toLocaleString('en', { month: 'long', year: 'numeric' });
       return (
         `${count} of ${total} visible reviews (${Math.round(share * 100)}%) ` +
         `were posted in ${monthName}. A concentrated burst of reviews in a single month ` +

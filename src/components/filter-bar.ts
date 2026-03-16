@@ -25,12 +25,10 @@ export class FilterBar extends LitElement {
     sortMode: 'most-informative',
   };
 
-  protected firstUpdated() {
-    this.filters = { ...this.filters, sortMode: this.defaultSort };
-  }
-
-  protected updated(changed: Map<string, unknown>) {
-    if (changed.has('defaultSort') && changed.get('defaultSort') !== undefined) {
+  // Sync filters.sortMode with defaultSort before each render that changes it.
+  // willUpdate() runs before render(), so mutating state here doesn't trigger a second cycle.
+  protected willUpdate(changed: Map<string, unknown>) {
+    if (changed.has('defaultSort')) {
       this.filters = { ...this.filters, sortMode: this.defaultSort };
     }
   }

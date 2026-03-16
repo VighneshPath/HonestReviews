@@ -32,10 +32,12 @@ export default defineContentScript({
     });
 
     // Relay live storage changes to the MAIN world.
+    // Derive keys from DEFAULT_SETTINGS so this stays in sync automatically when settings are added.
+    const SETTINGS_KEYS = Object.keys(DEFAULT_SETTINGS) as (keyof typeof DEFAULT_SETTINGS)[];
     browser.storage.onChanged.addListener((changes, area) => {
       if (area !== 'sync') return;
       const payload: Record<string, unknown> = {};
-      for (const key of ['enabled', 'showQualityBadges', 'autoCollapse', 'defaultSort', 'panelPosition']) {
+      for (const key of SETTINGS_KEYS) {
         if (key in changes) {
           payload[key] = (changes[key] as { newValue?: unknown }).newValue;
         }

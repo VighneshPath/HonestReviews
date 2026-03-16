@@ -55,15 +55,13 @@ export function calculateAdjustedRating(
       totalWeight += weight;
     }
 
-    if (totalWeight === 0) {
-      // All sampled tiers had 0% verified — fall through to simple average
-      verifiedRating = verifiedWithRating.reduce((acc, r) => acc + (r.rating ?? 0), 0) / verifiedWithRating.length;
-    } else {
-      verifiedRating = weightedSum / totalWeight;
-    }
+    // totalWeight === 0 means every sampled tier had 0% verified — fall back to plain average
+    verifiedRating = totalWeight > 0
+      ? weightedSum / totalWeight
+      : plainAverage(verifiedWithRating);
   } else {
-    // No histogram — plain average (page-visible reviews before fetch completes)
-    verifiedRating = verifiedWithRating.reduce((acc, r) => acc + (r.rating ?? 0), 0) / verifiedWithRating.length;
+    // No histogram yet (fetch hasn't completed) — use a plain average as a placeholder
+    verifiedRating = plainAverage(verifiedWithRating);
   }
 
   verifiedRating = Math.round(verifiedRating * 10) / 10;
@@ -76,6 +74,10 @@ export function calculateAdjustedRating(
     totalCount: reviews.length,
     delta,
   };
+}
+
+function plainAverage(reviews: ParsedReview[]): number {
+  return reviews.reduce((sum, r) => sum + (r.rating ?? 0), 0) / reviews.length;
 }
 
 /**

@@ -1,10 +1,15 @@
 /**
- * Generic DOM query helpers for resilient, fallback-based element selection.
- * Shared across all site parsers (Amazon, Flipkart, etc.).
+ * Generic DOM query helpers shared across all site parsers.
+ *
+ * Both helpers accept a list of CSS selectors ordered from most-preferred to
+ * least-preferred. They try each in turn and return the first that finds a
+ * match — making it straightforward to add fallback selectors when a site
+ * redesigns its DOM without breaking existing ones.
  */
 
 /**
- * Try each selector in an array, returning the first matching element.
+ * Returns the first element matched by any selector in the list, or null.
+ * Invalid selectors are silently skipped.
  */
 export function queryFirst(
   root: Document | Element,
@@ -22,7 +27,8 @@ export function queryFirst(
 }
 
 /**
- * Try each selector in an array, returning all matches from the first working selector.
+ * Returns all elements matched by the first selector in the list that finds anything.
+ * Invalid selectors are silently skipped.
  */
 export function queryAll(
   root: Document | Element,

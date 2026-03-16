@@ -28,22 +28,34 @@ import { DEFAULT_SETTINGS } from '../storage/types.js';
 import type { ReviewSignal } from '../stats/review-quality.js';
 import type { PanelPosition } from '../storage/types.js';
 
+/**
+ * Per-site plugin. Each site (Amazon, Flipkart, …) provides one implementation.
+ * content.ts uses only this interface — adding a new site requires no changes here.
+ */
 interface SiteAdapter {
+  /** Parse the product summary (rating histogram, average, count) from the current page. */
   parseProductPage: (doc: Document) => ProductPageData;
+  /** Parse the reviews currently visible in the DOM. */
   parseReviewList: (doc: Document) => ParsedReview[];
+  /**
+   * Background-fetch additional reviews, calling `onPage` after each batch.
+   * `id` is site-specific (ASIN for Amazon, reviews base URL for Flipkart).
+   * `histogram` in onPage is optional — only Flipkart provides it from the reviews page.
+   */
   fetchReviews: (
     id: string,
     signal: AbortSignal,
     onPage: (batch: ParsedReview[], tier: number, histogram?: StarDistribution[]) => void,
   ) => Promise<ParsedReview[]>;
-  /** Called at startFetch time (DOM ready) to get the fetch identifier/URL */
+  /** Returns the fetch identifier when the DOM is ready, or null if unavailable. */
   getReviewsFetchId: () => string | null;
-  /** Selectors used to detect when reviews have loaded and to watch for content changes */
+  /** CSS selectors for the review container — used to detect when reviews have loaded. */
   reviewContainerSelectors: string[];
   /**
-   * Signals available for review quality scoring on this site.
-   * Scores are normalised to 100 based on the max achievable with these signals.
-   * Defaults to ALL_SIGNALS when omitted (all signals available).
+   * Quality scoring signals available on this site. Scores are normalised to 100
+   * against the max achievable with these signals so that sites with fewer signals
+   * (e.g. Flipkart has no helpful-votes data) compare fairly.
+   * Defaults to ALL_SIGNALS when omitted.
    */
   reviewSignals?: ReadonlySet<ReviewSignal>;
 }
@@ -104,7 +116,9 @@ export default defineContentScript({
     let lastVisibleCount = -1;
     const fetchAbort = new AbortController();
 
-    function merged(visible: ParsedReview[]): ParsedReview[] {
+    // Merge page-visible reviews with background-fetched ones, keeping visible first
+    // and deduplicating by ID (visible reviews take precedence — they have a DOM element).
+    function mergeReviews(visible: ParsedReview[]): ParsedReview[] {
       const visibleIds = new Set(visible.map((r) => r.id));
       return [...visible, ...fetchedReviews.filter((r) => !visibleIds.has(r.id))];
     }
@@ -122,7 +136,7 @@ export default defineContentScript({
         if (visible.length === lastVisibleCount && panel) return;
         lastVisibleCount = visible.length;
 
-        const all = merged(visible);
+        const all = mergeReviews(visible);
         const adjustedRating = calculateAdjustedRating(all, productData.averageRating, productData.starDistribution);
         const distribution = analyzeDistribution(productData.starDistribution);
         const timeline = analyzeTimeline(all);
@@ -165,7 +179,7 @@ export default defineContentScript({
           ? histogram
           : productData.starDistribution;
 
-        const all = merged(site.parseReviewList(document));
+        const all = mergeReviews(site.parseReviewList(document));
         panel.reviews = all;
         panel.adjustedRating = calculateAdjustedRating(all, productData.averageRating, effectiveDist);
         panel.timeline = analyzeTimeline(all);

@@ -55,10 +55,8 @@ export function scoreReview(
     nuancedRating: availableSignals.has('nuancedRating') ? scoreNuancedRatingPoints(review.rating)  : 0,
   };
 
-  const rawTotal     = Object.values(raw).reduce((a, b) => a + b, 0);
-  const maxPossible  = (Object.keys(raw) as ReviewSignal[])
-    .filter((s) => availableSignals.has(s))
-    .reduce((sum, s) => sum + WEIGHTS[s], 0);
+  const rawTotal    = Object.values(raw).reduce((a, b) => a + b, 0);
+  const maxPossible = [...availableSignals].reduce((sum, s) => sum + WEIGHTS[s], 0);
 
   const total = maxPossible > 0 ? Math.min(100, Math.round((rawTotal / maxPossible) * 100)) : 0;
 
