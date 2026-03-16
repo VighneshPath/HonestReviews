@@ -8,7 +8,8 @@ import type { TimelineAnalysis } from '../stats/timeline-analysis.js';
 import type { FilterState } from './filter-bar.js';
 import type { SortMode } from '../stats/review-sorter.js';
 import { sortReviews } from '../stats/review-sorter.js';
-import { scoreReview, qualityTier } from '../stats/review-quality.js';
+import { scoreReview, qualityTier, ALL_SIGNALS } from '../stats/review-quality.js';
+import type { ReviewSignal } from '../stats/review-quality.js';
 import './star-histogram.js';
 import './adjusted-rating.js';
 import './filter-bar.js';
@@ -28,6 +29,7 @@ export class OverlayPanel extends LitElement {
   @property({ type: Boolean }) collapsed = false;
   @property({ type: Boolean }) showQualityBadges = true;
   @property({ type: String }) defaultSort: SortMode = 'most-informative';
+  @property({ attribute: false }) reviewSignals: ReadonlySet<ReviewSignal> = ALL_SIGNALS;
 
   @state() private activeTab: 'overview' | 'sort' = 'overview';
   @state() private filterState: FilterState = {
@@ -39,13 +41,10 @@ export class OverlayPanel extends LitElement {
   @state() private expandedIds: Set<string> = new Set();
   @state() private displayCount = 15;
 
-  protected firstUpdated() {
-    this.filterState = { ...this.filterState, sortMode: this.defaultSort };
-  }
-
-  // When defaultSort changes (e.g. user updates setting in popup), apply it immediately.
-  protected updated(changed: Map<string, unknown>) {
-    if (changed.has('defaultSort') && changed.get('defaultSort') !== undefined) {
+  // Sync filterState.sortMode with defaultSort before every render that changes it.
+  // willUpdate() runs before render(), so setting state here doesn't trigger a second update.
+  protected willUpdate(changed: Map<string, unknown>) {
+    if (changed.has('defaultSort')) {
       this.filterState = { ...this.filterState, sortMode: this.defaultSort };
     }
   }
@@ -193,7 +192,7 @@ export class OverlayPanel extends LitElement {
   }
 
   private renderReviewCard(review: ParsedReview) {
-    const score = scoreReview(review).total;
+    const score = scoreReview(review, new Date(), this.reviewSignals).total;
     const tier = qualityTier(score);
     const isExpanded = this.expandedIds.has(review.id);
     const TRUNCATE_AT = 280;

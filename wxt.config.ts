@@ -14,7 +14,7 @@ export default defineConfig({
   }),
   manifest: ({ browser }) => ({
     name: 'Honest Reviews',
-    description: 'Surface Amazon review data transparently — no AI, no servers, just the facts.',
+    description: 'Surface Amazon & Flipkart review data transparently — no AI, no servers, just the facts.',
     version: '0.1.0',
     permissions: ['storage', 'activeTab'],
 
@@ -41,6 +41,7 @@ export default defineConfig({
             '*://*.amazon.com.au/*',
             '*://*.amazon.co.jp/*',
             '*://*.amazon.in/*',
+            '*://*.flipkart.com/*',
           ],
         }
       : {
@@ -55,6 +56,7 @@ export default defineConfig({
             '*://*.amazon.com.au/*',
             '*://*.amazon.co.jp/*',
             '*://*.amazon.in/*',
+            '*://*.flipkart.com/*',
           ],
         }),
 

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { scoreReview, qualityLabel, qualityColor } from '../../../src/stats/review-quality.js';
+import { scoreReview, qualityLabel } from '../../../src/stats/review-quality.js';
+import type { ReviewSignal } from '../../../src/stats/review-quality.js';
 import type { ParsedReview } from '../../../src/parsers/amazon/review-list.js';
 
 function makeReview(overrides: Partial<ParsedReview> = {}): ParsedReview {
@@ -78,6 +79,25 @@ describe('scoreReview', () => {
       rating: 2,
     });
     expect(scoreReview(perfect, NOW).total).toBe(100);
+  });
+
+  it('normalises score to 100 when a signal is excluded', () => {
+    // Without hasImages (max possible = 90), a review with all other signals maxed → 100
+    const signals = new Set<ReviewSignal>(['length', 'helpfulVotes', 'verified', 'recency', 'nuancedRating']);
+    const review = makeReview({
+      bodyLength: 700,
+      helpfulVotes: 25,
+      isVerified: true,
+      hasImages: false, // not in signals, ignored
+      date: new Date('2025-01-01'),
+      rating: 3,
+    });
+    expect(scoreReview(review, NOW, signals).total).toBe(100);
+  });
+
+  it('gives 0 when no signals are available', () => {
+    const signals = new Set<ReviewSignal>();
+    expect(scoreReview(makeReview(), NOW, signals).total).toBe(0);
   });
 });
 

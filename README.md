@@ -1,6 +1,6 @@
 # Honest Reviews
 
-> **The Amazon review layer that doesn't lie to you.**
+> **The review layer that doesn't lie to you. Amazon & Flipkart.**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-support-yellow)](https://buymeacoffee.com/NerfLongshot)
@@ -10,7 +10,7 @@
 
 That 4.3-star product you're about to buy? Verified buyers might actually rate it **3.1 stars**. And 40% of those glowing reviews might have been posted in a single month.
 
-Honest Reviews surfaces what Amazon buries — right on the product page, with no accounts, no servers, and no AI guesswork.
+Honest Reviews surfaces what Amazon and Flipkart bury — right on the product page, with no accounts, no servers, and no AI guesswork.
 
 ---
 
@@ -95,11 +95,22 @@ Every review is scored on six signals:
 
 ---
 
-## How the reviews are fetched
+## Supported Sites
 
-We fetch one page (~10 reviews) per star tier in this order: **3-star → 4-star → 2-star → 1-star → 5-star**, giving you ~50 reviews across all rating levels — not just the 8–10 Amazon shows by default. Within each tier, Amazon returns their highest helpful-vote reviews.
+| Site | Status |
+|------|--------|
+| **Amazon** (.com, .co.uk, .de, .fr, .it, .es, .ca, .com.au, .co.jp, .in) | Full support |
+| **Flipkart** | Full support |
 
-This is a **stratified cross-section**: the most useful critical reviews, the most useful positive reviews, and everything in between — prioritizing nuanced 3-star reviews first.
+---
+
+## How reviews are fetched
+
+### Amazon
+One page (~10 reviews) per star tier in this order: **3-star → 4-star → 2-star → 1-star → 5-star**, giving ~50 reviews across all rating levels. Within each tier, Amazon returns their highest helpful-vote reviews. This is a **stratified cross-section** — prioritizing nuanced 3-star reviews first.
+
+### Flipkart
+Flipkart has no per-star filter, so we use **sort order as pseudo-stratification**: one page each of **Most Helpful**, **Negative** (low-star first), and **Positive** (high-star first). This gives a representative cross-section of ~30 reviews covering the full rating spectrum.
 
 ---
 
@@ -107,7 +118,7 @@ This is a **stratified cross-section**: the most useful critical reviews, the mo
 
 - **No data leaves your browser.** All analysis is local.
 - **No servers, no accounts, no tracking.**
-- The only network requests made are to Amazon's own `/product-reviews/` endpoint, using your existing Amazon session. No third-party requests, ever.
+- The only network requests made are to Amazon's or Flipkart's own review endpoints, using your existing session. No third-party requests, ever.
 
 ---
 
@@ -133,7 +144,7 @@ git clone https://github.com/VighneshPath/HonestReviews
 cd honest-reviews
 npm install
 npm run dev          # Chrome with HMR
-npm test             # 87 unit tests, ~1s
+npm test             # ~106 unit tests, ~1s
 ```
 
 ---
@@ -143,7 +154,9 @@ npm test             # 87 unit tests, ~1s
 ```
 src/
 ├── entrypoints/        # WXT entry points (content script, popup, background, settings relay)
-├── parsers/amazon/     # DOM parsing — all selectors in selectors.ts
+├── parsers/
+│   ├── amazon/         # Amazon DOM parsing — all selectors in selectors.ts
+│   └── flipkart/       # Flipkart DOM parsing (product page, review list, review fetcher)
 ├── stats/              # Pure statistical functions (no DOM)
 │   ├── adjusted-rating.ts
 │   ├── distribution-analysis.ts
@@ -152,9 +165,9 @@ src/
 │   └── timeline-analysis.ts
 ├── components/         # Lit web components (Shadow DOM), each with a paired .css file
 ├── storage/            # Settings types and storage helpers
-└── utils/              # URL matching
+└── utils/              # URL matching (amazon-url.ts, flipkart-url.ts)
 tests/
-├── unit/               # Vitest unit tests (87 tests, ~1s)
+├── unit/               # Vitest unit tests (~106 tests, ~1s)
 └── fixtures/           # Saved HTML snapshots
 ```
 
@@ -162,9 +175,10 @@ tests/
 
 ## Limitations
 
-- **Review count**: ~50 reviews analyzed (one page per star tier). Products with thousands of reviews are not fully represented.
-- **Language**: Optimized for English. Date parsing may degrade on non-English Amazon locales.
-- **DOM changes**: Amazon occasionally updates their page structure. If something breaks, the fix is almost always in [`selectors.ts`](src/parsers/amazon/selectors.ts).
+- **Review count**: ~50 reviews on Amazon (one page per star tier), ~30 on Flipkart (three sort orders). Products with thousands of reviews are not fully represented.
+- **Flipkart fetch**: Flipkart is a React SPA — the background-fetched review pages may return empty if server-side rendering isn't in place. The extension gracefully falls back to the product page's visible reviews.
+- **Language**: Optimized for English. Date parsing may degrade on non-English locales.
+- **DOM changes**: Sites occasionally update their page structure. If something breaks, the fix is almost always in the relevant `selectors.ts` or parser file.
 - **Not fake-review detection**: Genuine fake detection requires ML and historical data. We don't pretend otherwise. What we offer is transparency into what the visible data shows.
 
 ---
@@ -173,9 +187,11 @@ tests/
 
 PRs welcome. Most impactful areas:
 
-1. **Selector updates** — when Amazon changes their DOM, update `src/parsers/amazon/selectors.ts`
-2. **More locales** — test on non-.com Amazon domains, fix date parsing edge cases
-3. **Quality formula tuning** — improve the scoring in `src/stats/review-quality.ts`
+1. **Amazon selector updates** — when Amazon changes their DOM, update `src/parsers/amazon/selectors.ts`
+2. **Flipkart selector updates** — update `src/parsers/flipkart/review-list.ts` and `product-page.ts`
+3. **More sites** — the `SiteAdapter` pattern in `content.ts` makes adding new sites straightforward
+4. **More locales** — test on non-.com Amazon domains, fix date parsing edge cases
+5. **Quality formula tuning** — improve the scoring in `src/stats/review-quality.ts`
 
 Run `npm test` before submitting.
 

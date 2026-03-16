@@ -1,5 +1,6 @@
 import { browser } from 'wxt/browser';
 import { AMAZON_MATCHES } from '../utils/amazon-url.js';
+import { FLIPKART_MATCHES } from '../utils/flipkart-url.js';
 import { DEFAULT_SETTINGS } from '../storage/types.js';
 
 /**
@@ -14,7 +15,7 @@ import { DEFAULT_SETTINGS } from '../storage/types.js';
  * world content scripts, so we bridge everything through window.postMessage.
  */
 export default defineContentScript({
-  matches: AMAZON_MATCHES,
+  matches: [...AMAZON_MATCHES, ...FLIPKART_MATCHES],
   runAt: 'document_start',
 
   main() {
@@ -34,7 +35,7 @@ export default defineContentScript({
     browser.storage.onChanged.addListener((changes, area) => {
       if (area !== 'sync') return;
       const payload: Record<string, unknown> = {};
-      for (const key of ['enabled', 'showQualityBadges', 'autoCollapse', 'defaultSort']) {
+      for (const key of ['enabled', 'showQualityBadges', 'autoCollapse', 'defaultSort', 'panelPosition']) {
         if (key in changes) {
           payload[key] = (changes[key] as { newValue?: unknown }).newValue;
         }

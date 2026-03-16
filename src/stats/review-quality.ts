@@ -1,5 +1,11 @@
 import type { ParsedReview } from '../parsers/amazon/review-list.js';
 
+export type ReviewSignal = 'length' | 'helpfulVotes' | 'verified' | 'hasImages' | 'recency' | 'nuancedRating';
+
+export const ALL_SIGNALS = new Set<ReviewSignal>([
+  'length', 'helpfulVotes', 'verified', 'hasImages', 'recency', 'nuancedRating',
+]);
+
 export interface QualityScore {
   total: number;
   breakdown: {
@@ -13,7 +19,7 @@ export interface QualityScore {
   };
 }
 
-const WEIGHTS = {
+const WEIGHTS: Record<ReviewSignal, number> = {
   /** Max 30 points for length */
   length: 30,
   /** Max 25 points for helpful votes */
@@ -26,40 +32,46 @@ const WEIGHTS = {
   recency: 10,
   /** 10 bonus points for 2-3 star rating (most balanced perspective) */
   nuancedRating: 10,
-} as const;
+};
 
 /**
- * Score a review 0-100 based on signals of usefulness.
- * Higher = more worth reading.
+ * Score a review 0–100 based on signals of usefulness.
+ *
+ * @param availableSignals - Signals present on this site. Scores are normalised
+ *   to 100 based on the max achievable with those signals, so reviews from sites
+ *   that lack certain signals (e.g. no image uploads) are compared fairly.
  */
-export function scoreReview(review: ParsedReview, now = new Date()): QualityScore {
-  const length = scoreLengthPoints(review.bodyLength);
-  const helpfulVotes = scoreHelpfulPoints(review.helpfulVotes);
-  const verified = review.isVerified ? WEIGHTS.verified : 0;
-  const hasImages = review.hasImages ? WEIGHTS.hasImages : 0;
-  const recency = scoreRecencyPoints(review.date, now);
-  const nuancedRating = scoreNuancedRatingPoints(review.rating);
-
-  const total = Math.min(
-    100,
-    length + helpfulVotes + verified + hasImages + recency + nuancedRating,
-  );
-
-  return {
-    total,
-    breakdown: { length, helpfulVotes, verified, hasImages, recency, nuancedRating },
+export function scoreReview(
+  review: ParsedReview,
+  now = new Date(),
+  availableSignals: ReadonlySet<ReviewSignal> = ALL_SIGNALS,
+): QualityScore {
+  const raw = {
+    length:        availableSignals.has('length')        ? scoreLengthPoints(review.bodyLength)      : 0,
+    helpfulVotes:  availableSignals.has('helpfulVotes')  ? scoreHelpfulPoints(review.helpfulVotes)   : 0,
+    verified:      availableSignals.has('verified')      ? (review.isVerified ? WEIGHTS.verified : 0): 0,
+    hasImages:     availableSignals.has('hasImages')     ? (review.hasImages  ? WEIGHTS.hasImages  : 0): 0,
+    recency:       availableSignals.has('recency')       ? scoreRecencyPoints(review.date, now)      : 0,
+    nuancedRating: availableSignals.has('nuancedRating') ? scoreNuancedRatingPoints(review.rating)  : 0,
   };
+
+  const rawTotal     = Object.values(raw).reduce((a, b) => a + b, 0);
+  const maxPossible  = (Object.keys(raw) as ReviewSignal[])
+    .filter((s) => availableSignals.has(s))
+    .reduce((sum, s) => sum + WEIGHTS[s], 0);
+
+  const total = maxPossible > 0 ? Math.min(100, Math.round((rawTotal / maxPossible) * 100)) : 0;
+
+  return { total, breakdown: raw };
 }
 
 function scoreLengthPoints(chars: number): number {
-  // 0 chars = 0, 100 chars = ~10, 300 chars = ~20, 600+ chars = 30
   if (chars <= 0) return 0;
   if (chars >= 600) return WEIGHTS.length;
   return Math.round((chars / 600) * WEIGHTS.length);
 }
 
 function scoreHelpfulPoints(votes: number): number {
-  // 0 = 0, 5 = ~13, 20+ = 25
   if (votes <= 0) return 0;
   if (votes >= 20) return WEIGHTS.helpfulVotes;
   return Math.round((votes / 20) * WEIGHTS.helpfulVotes);
@@ -67,20 +79,15 @@ function scoreHelpfulPoints(votes: number): number {
 
 function scoreRecencyPoints(date: Date | null, now: Date): number {
   if (!date) return 0;
-  const ageMs = now.getTime() - date.getTime();
-  const ageDays = ageMs / (1000 * 60 * 60 * 24);
-
-  if (ageDays <= 90) return WEIGHTS.recency; // Within 3 months — full score
-  if (ageDays <= 365) return Math.round(WEIGHTS.recency * 0.7); // Within 1 year — 7 points
-  if (ageDays <= 730) return Math.round(WEIGHTS.recency * 0.4); // Within 2 years — 4 points
-  return 0; // Older — no recency bonus
+  const ageDays = (now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24);
+  if (ageDays <= 90)  return WEIGHTS.recency;
+  if (ageDays <= 365) return Math.round(WEIGHTS.recency * 0.7);
+  if (ageDays <= 730) return Math.round(WEIGHTS.recency * 0.4);
+  return 0;
 }
 
 function scoreNuancedRatingPoints(rating: number | null): number {
-  if (rating === null) return 0;
-  // 2-3 star reviews tend to be most balanced/nuanced
-  if (rating === 2 || rating === 3) return WEIGHTS.nuancedRating;
-  return 0;
+  return (rating === 2 || rating === 3) ? WEIGHTS.nuancedRating : 0;
 }
 
 /** Quality tier label based on score */

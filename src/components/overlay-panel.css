@@ -3,6 +3,19 @@
 :host {
   display: block;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  /* Normalize rem-based Tailwind values for sites that modify html font-size
+     (e.g. Flipkart React Native Web). rem resolves against the document root;
+     overriding Tailwind's CSS custom properties with px keeps sizing consistent. */
+  --spacing: 4px;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 18px;
+  --radius-sm: 2px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 16px;
   --hr-accent: #3b82f6;
   --hr-bg: #ffffff;
   --hr-border: #e5e7eb;
